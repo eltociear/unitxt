@@ -20,6 +20,7 @@ class FromIterables(StreamInitializerOperator):
 
 
 class MapInstanceValues(StreamInstanceOperator):
+
     """A class used to map instance values in a stream.
 
     This class is a type of StreamInstanceOperator, and its main purpose
@@ -32,7 +33,6 @@ class MapInstanceValues(StreamInstanceOperator):
         strict (bool): If True, the mapping is applied strictly. That means if a value 
             does not exist in the mapper, it will raise a KeyError. If False, values 
             that are not present in the mapper are kept as they are.
-
     """
     mappers: Dict[str, Dict[str, str]]
     strict: bool = True
