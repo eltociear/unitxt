@@ -6,7 +6,7 @@ from src.unitxt.operators import (
     FilterByValues,
     ApplyValueOperatorsField,
     AddFields,
-    Unique,
+    Unique, RenameFields,
 )
 
 from src.unitxt.test_utils.operators import apply_operator
@@ -113,4 +113,21 @@ class TestOperators(unittest.TestCase):
         for output, target in zip(outputs, targets):
             self.assertDictEqual(output, target)
         
-    
+    def test_rename_fields(self):
+        inputs = [
+            {'a': 1, 'b': 2},
+            {'a': 2, 'b': 3},
+        ]
+
+        targets = [
+            {'a': 1, 'c': 2},
+            {'a': 2, 'c': 3},
+        ]
+
+        outputs = apply_operator(
+            operator=RenameFields(mapper={'b': 'c'}),
+            inputs=inputs
+        )
+
+        for output, target in zip(outputs, targets):
+            self.assertDictEqual(output, target)
