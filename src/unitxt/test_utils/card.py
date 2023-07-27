@@ -2,6 +2,7 @@ import json
 import logging
 import os.path
 import tempfile
+import math
 
 from .. import add_to_catalog
 from ..artifact import fetch_artifact
@@ -62,7 +63,7 @@ def test_with_eval(card):
         predictions.append(example['references'][0] if len(example['references']) > 0 else [])
 
     results = _compute(predictions=predictions, references=examples)
-    assert results[0]['score']['global']['groups_mean_score'] == 1.0, \
+    assert math.isclose(results[0]['score']['global']['groups_mean_score'], 1.0), \
         f"Metric on examples equal predicions is no 1.0, but {results[0]['score']['global']['groups_mean_score']}"
     predictions = ['a1s', 'bfsdf', 'dgdfgs', 'gfjgfh', 'ghfjgh']
     results = _compute(predictions=predictions, references=examples)
