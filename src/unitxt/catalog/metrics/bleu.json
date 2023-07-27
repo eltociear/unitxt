@@ -1,0 +1,12 @@
+{
+    "type": "metric_pipeline",
+    "main_score": "score",
+    "preprocess_steps": [],
+    "postpreprocess_steps": [],
+    "metric": {
+        "type": "huggingface_metric",
+        "metric_name": "sacrebleu",
+        "main_score": "score",
+        "scale": 100.0
+    }
+}
