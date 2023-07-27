@@ -1,32 +1,10 @@
 from src.unitxt.metrics import MetricPipeline, HuggingfaceMetric
 from src.unitxt.test_utils.metrics import test_metric
 from src.unitxt import add_to_catalog
-from src.unitxt.blocks import CastFields, CopyPasteFields
-import numpy as np
-import evaluate
 
-# metric = evaluate.load("sacrebleu")
-# def get_sentence_bleu(metric, pred, gold):
-    # score = metric.compute(predictions=[pred], references=[[gold]])['score']
-    # return score
-
-# if __name__ == "__main__":
-
-#     predictions = ["hello there general kenobi", "on our way to ankh morpork"]
-#     references = [["hello there general kenobi", "hello there !"], ["goodbye ankh morpork", "ankh morpork"]]
-
-#     metric = evaluate.load("sacrebleu")
-#     results = metric.compute(predictions=[predictions[1]], references=[references[1]]) #['score']
-    
 metric = MetricPipeline(
     main_score='score',
     preprocess_steps=[
-        # CopyPasteFields(mapping=[('references/0', 'references')], use_dpath=True),
-        # CastFields(
-        #     fields={'prediction': 'float', 'references': 'float'}, 
-        #     failure_defaults={'prediction': 0.0}, 
-        #     use_dpath=True,
-        # ),
     ],
     metric=HuggingfaceMetric(
         metric_name='sacrebleu',
