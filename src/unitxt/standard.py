@@ -14,6 +14,10 @@ from .templates import Template
 
 
 class BaseRecipe(Recipe, SourceSequntialOperator):
+    """
+    @TODO: add docs
+    """
+
     card: TaskCard
     template: Template = None
     instruction: Instruction = None
@@ -63,7 +67,10 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
             self.steps.append(
                 SeparateSplit(
                     from_split=self.demos_taken_from,
-                    to_split_names=[self.demos_pool_name, self.demos_taken_from],
+                    to_split_names=[
+                        self.demos_pool_name,
+                        self.demos_taken_from,
+                    ],
                     to_split_sizes=[int(self.demos_pool_size)],
                 )
             )
@@ -117,6 +124,10 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
 
 
 class StandardRecipeWithIndexes(BaseRecipe):
+    """
+    @TODO: add docs
+    """
+
     instruction_card_index: int = None
     template_card_index: int = None
 
@@ -138,10 +149,10 @@ class StandardRecipeWithIndexes(BaseRecipe):
 
 class StandardRecipe(StandardRecipeWithIndexes):
     """
-    This class represents a standard recipe for data processing and preperation.
-    This class can be used to prepare a recipe
-    with all necessary steps, refiners and renderers included. It allows to set various
-    parameters and steps in a sequential manner for preparing the recipe.
+    This class represents a standard recipe for data processing and
+    preperation. This class can be used to prepare a recipe with all necessary
+    steps, refiners and renderers included. It allows to set various parameters
+    and steps in a sequential manner for preparing the recipe.
 
     Attributes:
         card (TaskCard): TaskCard object associated with the recipe.
@@ -174,5 +185,3 @@ class StandardRecipe(StandardRecipeWithIndexes):
         AssertionError: If both template and template_card_index, or instruction and instruction_card_index
             are specified at the same time.
     """
-
-    pass

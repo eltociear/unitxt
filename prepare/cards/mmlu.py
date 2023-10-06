@@ -81,7 +81,10 @@ templates = {
     "fm-eval": """The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer:""".strip(),
 }
 MMLU_TEMPLATES = TemplatesDict(
-    {key: InputOutputTemplate(input_format=val, output_format="{label}") for key, val in templates.items()}
+    {
+        key: InputOutputTemplate(input_format=val, output_format="{label}")
+        for key, val in templates.items()
+    }
 )
 
 for k, v in templates.items():
@@ -91,9 +94,9 @@ for k, v in templates.items():
 CONTEXT_MMLU_TEMPLATES = TemplatesDict(
     {
         key: InputOutputTemplate(
-            input_format=val.replace("Question:", "Context: {context}\nQuestion:").replace(
-                "{sentence1}", "{context}\n{sentence1}"
-            ),
+            input_format=val.replace(
+                "Question:", "Context: {context}\nQuestion:"
+            ).replace("{sentence1}", "{context}\n{sentence1}"),
             output_format="{label}",
         )
         for key, val in templates.items()
@@ -106,7 +109,10 @@ def multiple_choice_outputs():
 
 
 def multiple_choice_inputs_outputs(context=False):
-    return {"inputs": multiple_choice_inputs(context=context), "outputs": multiple_choice_outputs()}
+    return {
+        "inputs": multiple_choice_inputs(context=context),
+        "outputs": multiple_choice_outputs(),
+    }
 
 
 def multiple_choice_inputs(context=False):
@@ -126,7 +132,8 @@ def multiple_choice_preprocess(
     expected_answer: str = "number",
 ) -> List[Union[StreamingOperator, str]]:
     """
-    Processing to make a unified format of multiple choice questions
+    Processing to make a unified format of multiple choice questions.
+
     :param numbering: the field containing the numerals to use (e.g. ABCD [1,2,3,4])
     :param choices: the field with the choices (e.g. ['apple','bannana']
     :param topic: the field containing the topic of the question
@@ -144,13 +151,40 @@ def multiple_choice_preprocess(
     renames[question] = "sentence1"
     return [
         RenameFields(field_to_field=renames),
-        TakeByField(field=renames[numbering], index=renames[label_index], to_field="number"),
-        TakeByField(field=renames[choices], index=renames[label_index], to_field="answer"),
-        ZipFieldValues(fields=[renames[numbering], renames[choices]], to_field="choices"),
-        JoinStr(separator=". ", field="choices/*", to_field="choices_list", use_query=True, process_every_value=True),
-        TakeByField(field="choices_list", index=renames[label_index], to_field="number_and_answer"),
-        JoinStr(separator=",", field="choices/*/0", to_field="numbers", use_query=True),
-        JoinStr(separator=" ", field="choices_list", to_field="choices"),  # field_to_field
+        TakeByField(
+            field=renames[numbering],
+            index=renames[label_index],
+            to_field="number",
+        ),
+        TakeByField(
+            field=renames[choices],
+            index=renames[label_index],
+            to_field="answer",
+        ),
+        ZipFieldValues(
+            fields=[renames[numbering], renames[choices]], to_field="choices"
+        ),
+        JoinStr(
+            separator=". ",
+            field="choices/*",
+            to_field="choices_list",
+            use_query=True,
+            process_every_value=True,
+        ),
+        TakeByField(
+            field="choices_list",
+            index=renames[label_index],
+            to_field="number_and_answer",
+        ),
+        JoinStr(
+            separator=",",
+            field="choices/*/0",
+            to_field="numbers",
+            use_query=True,
+        ),
+        JoinStr(
+            separator=" ", field="choices_list", to_field="choices"
+        ),  # field_to_field
         RenameFields(field_to_field={expected_answer: "label"}),
     ]
 
@@ -165,7 +199,12 @@ def main():
             loader=LoadHF(path="cais/mmlu", name=subtask),
             preprocess_steps=[
                 RenameSplits({"auxiliary_train": "train"}),
-                AddFields({"numbering": numbering, "topic": subtask.replace("_", " ")}),
+                AddFields(
+                    {
+                        "numbering": numbering,
+                        "topic": subtask.replace("_", " "),
+                    }
+                ),
                 *multiple_choice_preprocess(
                     question="question",
                     numbering="numbering",

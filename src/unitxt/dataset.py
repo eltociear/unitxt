@@ -57,9 +57,8 @@ def fetch(artifact_name):
 
 
 def parse(query: str):
-    """
-    Parses a query of the form 'key1=value1,key2=value2,...' into a dictionary.
-    """
+    """Parses a query of the form 'key1=value1,key2=value2,...' into a
+    dictionary."""
     result = {}
     kvs = query.split(",")
     if len(kvs) == 0:
@@ -68,8 +67,14 @@ def parse(query: str):
         )
     for kv in kvs:
         key_val = kv.split("=")
-        if len(key_val) != 2 or len(key_val[0].strip()) == 0 or len(key_val[1].strip()) == 0:
-            raise ValueError('Illegal query: "{query}" with wrong assignment "{kv}" should be of the form: key=value.')
+        if (
+            len(key_val) != 2
+            or len(key_val[0].strip()) == 0
+            or len(key_val[1].strip()) == 0
+        ):
+            raise ValueError(
+                'Illegal query: "{query}" with wrong assignment "{kv}" should be of the form: key=value.'
+            )
         key, val = key_val
         if val.isdigit():
             result[key] = int(val)
@@ -126,13 +131,20 @@ class Dataset(datasets.GeneratorBasedBuilder):
         return datasets.DatasetInfo()
 
     def _split_generators(self, _):
-        return [datasets.SplitGenerator(name=name, gen_kwargs={"split_name": name}) for name in self.generators.keys()]
+        return [
+            datasets.SplitGenerator(name=name, gen_kwargs={"split_name": name})
+            for name in self.generators.keys()
+        ]
 
     def _generate_examples(self, split_name):
         generator = self.generators[split_name]
         for i, row in enumerate(generator):
             yield i, row
 
-    def _download_and_prepare(self, dl_manager, verification_mode, **prepare_splits_kwargs):
-        result = super()._download_and_prepare(dl_manager, "no_checks", **prepare_splits_kwargs)
+    def _download_and_prepare(
+        self, dl_manager, verification_mode, **prepare_splits_kwargs
+    ):
+        result = super()._download_and_prepare(
+            dl_manager, "no_checks", **prepare_splits_kwargs
+        )
         return result

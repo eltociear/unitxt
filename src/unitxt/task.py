@@ -4,25 +4,33 @@ from .operator import StreamInstanceOperator
 
 
 class Tasker:
-    pass
+    """
+    @TODO: add docs
+    """
 
 
 class FormTask(Tasker, StreamInstanceOperator):
+    """
+    @TODO: add docs
+    """
+
     inputs: List[str]
     outputs: List[str]
     metrics: List[str]
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         try:
             inputs = {key: instance[key] for key in self.inputs}
-        except KeyError as e:
+        except KeyError:
             raise KeyError(
                 f"Unexpected input column names: {list(key for key in self.inputs if key not in instance)}"
                 f"\n available names:{list(instance.keys())}\n given input names:{self.inputs}"
             )
         try:
             outputs = {key: instance[key] for key in self.outputs}
-        except KeyError as e:
+        except KeyError:
             raise KeyError(
                 f"Unexpected output column names: {list(key for key in self.outputs if key not in instance)}"
                 f" \n available names:{list(instance.keys())}\n given output names:{self.outputs}"
@@ -36,13 +44,19 @@ class FormTask(Tasker, StreamInstanceOperator):
 
 
 class MultipleChoiceTask(FormTask):
+    """
+    @TODO: add docs
+    """
+
     choices_field: str = "choices"
     choices_separator: str = "\n"
     enumeration_suffix: str = ". "
     use_text_in_target: bool = False
     alphabet: str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-    def process_single_choice(self, choice: str, index: int, use_text: bool = True) -> str:
+    def process_single_choice(
+        self, choice: str, index: int, use_text: bool = True
+    ) -> str:
         try:
             processed_choice = f"{self.alphabet[index]}"
         except IndexError:
@@ -60,9 +74,15 @@ class MultipleChoiceTask(FormTask):
         return self.choices_separator.join(processed_choices)
 
     def process_target(self, choices, target_index):
-        return self.process_single_choice(choices[target_index], target_index, use_text=self.use_text_in_target)
+        return self.process_single_choice(
+            choices[target_index],
+            target_index,
+            use_text=self.use_text_in_target,
+        )
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         result = super().process(instance, stream_name)
         target_key, target_value = next(iter(result["outputs"].items()))
         choices = result["inputs"][self.choices_field]

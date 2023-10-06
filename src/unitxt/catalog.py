@@ -12,6 +12,10 @@ PATHS_SEP = ":"
 
 
 class Catalog(Artifactory):
+    """
+    @TODO: add docs
+    """
+
     name: str = None
     location: str = None
 
@@ -30,17 +34,25 @@ default_catalog_path = os.path.join(lib_dir, "catalog")
 
 
 class LocalCatalog(Catalog):
+    """
+    @TODO: add docs
+    """
+
     name: str = "local"
     location: str = default_catalog_path
 
     def path(self, artifact_identifier: str):
-        assert artifact_identifier.strip(), "artifact_identifier should not be an empty string."
+        assert (
+            artifact_identifier.strip()
+        ), "artifact_identifier should not be an empty string."
         parts = artifact_identifier.split(COLLECTION_SEPARATOR)
         parts[-1] = parts[-1] + ".json"
         return os.path.join(self.location, *parts)
 
     def load(self, artifact_identifier: str):
-        assert artifact_identifier in self, "Artifact with name {} does not exist".format(artifact_identifier)
+        assert (
+            artifact_identifier in self
+        ), "Artifact with name {} does not exist".format(artifact_identifier)
         path = self.path(artifact_identifier)
         artifact_instance = Artifact.load(path)
         return artifact_instance
@@ -56,8 +68,15 @@ class LocalCatalog(Catalog):
             return False
         return os.path.exists(path) and os.path.isfile(path)
 
-    def save_artifact(self, artifact: Artifact, artifact_identifier: str, overwrite: bool = False):
-        assert isinstance(artifact, Artifact), f"Input artifact must be an instance of Artifact, got {type(artifact)}"
+    def save_artifact(
+        self,
+        artifact: Artifact,
+        artifact_identifier: str,
+        overwrite: bool = False,
+    ):
+        assert isinstance(
+            artifact, Artifact
+        ), f"Input artifact must be an instance of Artifact, got {type(artifact)}"
         if not overwrite:
             assert (
                 artifact_identifier not in self
@@ -69,10 +88,16 @@ class LocalCatalog(Catalog):
 
 
 class EnvironmentLocalCatalog(LocalCatalog):
-    pass
+    """
+    @TODO: add docs
+    """
 
 
 class GithubCatalog(LocalCatalog):
+    """
+    @TODO: add docs
+    """
+
     name = "community"
     repo = "unitxt"
     repo_dir = "src/unitxt/catalog"
@@ -101,12 +126,18 @@ def verify_legal_catalog_name(name):
 
 
 def add_to_catalog(
-    artifact: Artifact, name: str, catalog: Catalog = None, overwrite: bool = False, catalog_path: str = None
+    artifact: Artifact,
+    name: str,
+    catalog: Catalog = None,
+    overwrite: bool = False,
+    catalog_path: str = None,
 ):
     if catalog is None:
         if catalog_path is None:
             catalog_path = default_catalog_path
         catalog = LocalCatalog(location=catalog_path)
     verify_legal_catalog_name(name)
-    catalog.save_artifact(artifact, name, overwrite=overwrite)  # remove collection (its actually the dir).
+    catalog.save_artifact(
+        artifact, name, overwrite=overwrite
+    )  # remove collection (its actually the dir).
     # verify name

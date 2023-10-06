@@ -5,7 +5,12 @@ from src.unitxt.test_utils.metrics import test_metric
 metric = HuggingfaceMetric(hf_metric_name="bleu", main_score="bleu", scale=1.0)
 
 predictions = ["hello there general kenobi", "foo bar foobar", "", "not empty"]
-references = [["hello there general kenobi", "hello there !"], ["foo bar foobar"], ["not empty"], [""]]
+references = [
+    ["hello there general kenobi", "hello there !"],
+    ["foo bar foobar"],
+    ["not empty"],
+    [""],
+]
 
 instance_targets = [
     {

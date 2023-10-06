@@ -11,7 +11,6 @@ from .stream import MultiStream, Stream
 
 try:
     import ibm_boto3
-    from ibm_botocore.client import ClientError
 
     ibm_boto3_available = True
 except ImportError:
@@ -19,26 +18,42 @@ except ImportError:
 
 
 class Loader(SourceOperator):
-    pass
+    """
+    @TODO: add docs
+    """
 
 
 class LoadHF(Loader):
+    """
+    @TODO: add docs
+    """
+
     path: str
     name: Optional[str] = None
     data_dir: Optional[str] = None
-    data_files: Optional[Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]] = None
+    data_files: Optional[
+        Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
+    ] = None
     streaming: bool = True
     cached = False
 
     def process(self):
         dataset = hf_load_dataset(
-            self.path, name=self.name, data_dir=self.data_dir, data_files=self.data_files, streaming=self.streaming
+            self.path,
+            name=self.name,
+            data_dir=self.data_dir,
+            data_files=self.data_files,
+            streaming=self.streaming,
         )
 
         return MultiStream.from_iterables(dataset)
 
 
 class LoadCSV(Loader):
+    """
+    @TODO: add docs
+    """
+
     files: Dict[str, str]
     chunksize: int = 1000
 
@@ -49,11 +64,18 @@ class LoadCSV(Loader):
 
     def process(self):
         return MultiStream(
-            {name: Stream(generator=self.load_csv, gen_kwargs={"file": file}) for name, file in self.files.items()}
+            {
+                name: Stream(generator=self.load_csv, gen_kwargs={"file": file})
+                for name, file in self.files.items()
+            }
         )
 
 
 class LoadFromIBMCloud(Loader):
+    """
+    @TODO: add docs
+    """
+
     endpoint_url_env: str
     aws_access_key_id_env: str
     aws_secret_access_key_env: str
@@ -75,7 +97,9 @@ class LoadFromIBMCloud(Loader):
             progress_bar.update(chunk)
 
         try:
-            cos.Bucket(bucket_name).download_file(item_name, local_file, Callback=upload_progress)
+            cos.Bucket(bucket_name).download_file(
+                item_name, local_file, Callback=upload_progress
+            )
             print("\nDownload Successful")
         except Exception as e:
             raise Exception(f"Unabled to download {item_name} in {bucket_name}", e)
@@ -90,9 +114,13 @@ class LoadFromIBMCloud(Loader):
         super().verify()
         assert (
             ibm_boto3_available
-        ), f"Please install ibm_boto3 in order to use the LoadFromIBMCloud loader (using `pip install ibm-cos-sdk`) "
-        assert self.endpoint_url is not None, f"Please set the {self.endpoint_url_env} environmental variable"
-        assert self.aws_access_key_id is not None, f"Please set {self.aws_access_key_id_env} environmental variable"
+        ), "Please install ibm_boto3 in order to use the LoadFromIBMCloud loader (using `pip install ibm-cos-sdk`) "
+        assert (
+            self.endpoint_url is not None
+        ), f"Please set the {self.endpoint_url_env} environmental variable"
+        assert (
+            self.aws_access_key_id is not None
+        ), f"Please set {self.aws_access_key_id_env} environmental variable"
         assert (
             self.aws_secret_access_key is not None
         ), f"Please set {self.aws_secret_access_key_env} environmental variable"
@@ -108,7 +136,10 @@ class LoadFromIBMCloud(Loader):
         with TemporaryDirectory() as temp_directory:
             for data_file in self.data_files:
                 self._download_from_cos(
-                    cos, self.bucket_name, self.data_dir + "/" + data_file, temp_directory + "/" + data_file
+                    cos,
+                    self.bucket_name,
+                    self.data_dir + "/" + data_file,
+                    temp_directory + "/" + data_file,
                 )
             dataset = hf_load_dataset(temp_directory, streaming=False)
 

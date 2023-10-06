@@ -1,8 +1,11 @@
-from queue import Queue
 from typing import Any, Dict
 
 
 class Singleton(type):
+    """
+    @TODO: add docs
+    """
+
     _instances = {}
 
     def __call__(cls, *args, **kwargs):
@@ -11,7 +14,9 @@ class Singleton(type):
         return cls._instances[cls]
 
 
-def flatten_dict(d: Dict[str, Any], parent_key: str = "", sep: str = "_") -> Dict[str, Any]:
+def flatten_dict(
+    d: Dict[str, Any], parent_key: str = "", sep: str = "_"
+) -> Dict[str, Any]:
     items = []
     for k, v in d.items():
         new_key = parent_key + sep + k if parent_key else k

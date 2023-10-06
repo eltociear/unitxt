@@ -1,7 +1,6 @@
 import os
 import tempfile
 import unittest
-from math import isnan
 
 import pandas as pd
 from src.unitxt.loaders import LoadCSV
@@ -25,5 +24,7 @@ class TestLoaders(unittest.TestCase):
             ms = loader()
 
             for file in ["train", "test"]:
-                for saved_instance, loaded_instance in zip(dfs[file].iterrows(), ms[file]):
+                for saved_instance, loaded_instance in zip(
+                    dfs[file].iterrows(), ms[file]
+                ):
                     self.assertEqual(saved_instance[1].to_dict(), loaded_instance)

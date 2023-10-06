@@ -21,7 +21,7 @@ from src.unitxt.operators import (
     Unique,
     ZipFieldValues,
 )
-from src.unitxt.stream import MultiStream, Stream
+from src.unitxt.stream import MultiStream
 from src.unitxt.test_utils.operators import apply_operator, test_operator
 
 
@@ -55,7 +55,12 @@ class TestOperators(unittest.TestCase):
             {"a...b": 2},
         ]
 
-        test_operator(operator=FlattenInstances(sep="..."), inputs=inputs, targets=targets, tester=self)
+        test_operator(
+            operator=FlattenInstances(sep="..."),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
     def test_filter_by_values(self):
         inputs = [
@@ -67,7 +72,12 @@ class TestOperators(unittest.TestCase):
             {"a": 1, "b": 2},
         ]
 
-        test_operator(operator=FilterByValues(values={"a": 1}), inputs=inputs, targets=targets, tester=self)
+        test_operator(
+            operator=FilterByValues(values={"a": 1}),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
     def test_apply_value_operators_field(self):
         inputs = [
@@ -81,7 +91,11 @@ class TestOperators(unittest.TestCase):
         ]
 
         test_operator(
-            operator=ApplyOperatorsField(inputs_fields=["a"], operators_field="c", default_operators=["add"]),
+            operator=ApplyOperatorsField(
+                inputs_fields=["a"],
+                operators_field="c",
+                default_operators=["add"],
+            ),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -98,7 +112,12 @@ class TestOperators(unittest.TestCase):
             {"a": 2, "b": 3, "c": 3},
         ]
 
-        test_operator(operator=AddFields(fields={"c": 3}), inputs=inputs, targets=targets, tester=self)
+        test_operator(
+            operator=AddFields(fields={"c": 3}),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
     def test_remove_fields(self):
         inputs = [
@@ -111,7 +130,12 @@ class TestOperators(unittest.TestCase):
             {"a": 2},
         ]
 
-        test_operator(operator=RemoveFields(fields=["b"]), inputs=inputs, targets=targets, tester=self)
+        test_operator(
+            operator=RemoveFields(fields=["b"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
     def test_unique_on_single_field(self):
         inputs = [
@@ -153,7 +177,11 @@ class TestOperators(unittest.TestCase):
             {"a": 2, "b": 4},
         ]
 
-        outputs = apply_operator(operator=SplitByValue(fields="a"), inputs=inputs, return_multi_stream=True)
+        outputs = apply_operator(
+            operator=SplitByValue(fields="a"),
+            inputs=inputs,
+            return_multi_stream=True,
+        )
 
         self.assertSetEqual(set(outputs.keys()), {"test_1", "test_2"})
 
@@ -189,10 +217,14 @@ class TestOperators(unittest.TestCase):
         self.assertSetEqual(set(page_1_inputs), set(page_1_outputs))
         self.assertSetEqual(set(page_2_inputs), set(page_2_outputs))
 
-        inputs_outputs_intersection = set(page_1_inputs).intersection(set(page_2_outputs))
+        inputs_outputs_intersection = set(page_1_inputs).intersection(
+            set(page_2_outputs)
+        )
         self.assertSetEqual(inputs_outputs_intersection, set())
 
-        inputs_outputs_intersection = set(page_2_inputs).intersection(set(page_1_outputs))
+        inputs_outputs_intersection = set(page_2_inputs).intersection(
+            set(page_1_outputs)
+        )
         self.assertSetEqual(inputs_outputs_intersection, set())
 
     def test_cast_fields(self):
@@ -207,7 +239,10 @@ class TestOperators(unittest.TestCase):
         ]
 
         test_operator(
-            operator=CastFields(fields={"a": "float", "b": "int"}, failure_defaults={"a": 0.0, "b": 0}),
+            operator=CastFields(
+                fields={"a": "float", "b": "int"},
+                failure_defaults={"a": 0.0, "b": 0},
+            ),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -220,7 +255,10 @@ class TestOperators(unittest.TestCase):
         ]
 
         with self.assertRaises(ValueError):
-            outputs = apply_operator(operator=CastFields(fields={"a": "float", "b": "int"}), inputs=inputs)
+            _ = apply_operator(
+                operator=CastFields(fields={"a": "float", "b": "int"}),
+                inputs=inputs,
+            )
 
     def test_rename_fields(self):
         inputs = [
@@ -233,7 +271,12 @@ class TestOperators(unittest.TestCase):
             {"a": 2, "c": 3},
         ]
 
-        test_operator(operator=RenameFields(field_to_field={"b": "c"}), inputs=inputs, targets=targets, tester=self)
+        test_operator(
+            operator=RenameFields(field_to_field={"b": "c"}),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
     def test_copy_paste_fields(self):
         inputs = [
@@ -279,7 +322,10 @@ class TestOperators(unittest.TestCase):
         ]
 
         test_operator(
-            operator=EncodeLabels(fields=["prediction", "references/*"]), inputs=inputs, targets=targets, tester=self
+            operator=EncodeLabels(fields=["prediction", "references/*"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
         )
 
     def test_join_str(self):
@@ -294,7 +340,10 @@ class TestOperators(unittest.TestCase):
         ]
 
         test_operator(
-            operator=JoinStr(field_to_field={"a": "b"}, separator=","), inputs=inputs, targets=targets, tester=self
+            operator=JoinStr(field_to_field={"a": "b"}, separator=","),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
         )
 
     def test_zip_fields(self):
@@ -336,7 +385,10 @@ class TestOperators(unittest.TestCase):
     def test_stream_refiner(self):
         refiner = StreamRefiner()
 
-        ms = MultiStream.from_iterables({"train": [{"x": 0}, {"x": 1}], "test": [{"x": 2}, {"x": 3}]}, copying=True)
+        ms = MultiStream.from_iterables(
+            {"train": [{"x": 0}, {"x": 1}], "test": [{"x": 2}, {"x": 3}]},
+            copying=True,
+        )
 
         refiner.apply_to_streams = ["train"]
         refiner.max_instances = 1

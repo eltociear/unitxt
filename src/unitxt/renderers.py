@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Any, Dict, List
 
 from .dataclass import InternalField
@@ -10,18 +10,27 @@ from .templates import Template
 
 
 class Renderer(ABC):
-    pass
+    """
+    @TODO: add docs
+    """
+
     # @abstractmethod
     # def get_postprocessors(self) -> List[str]:
     #     pass
 
 
 class RenderTemplate(Renderer, StreamInstanceOperator):
+    """
+    @TODO: add docs
+    """
+
     template: Template
     random_reference: bool = False
     skip_rendered_instance: bool = True
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         if self.skip_rendered_instance:
             if (
                 "inputs" not in instance
@@ -62,9 +71,15 @@ class RenderTemplate(Renderer, StreamInstanceOperator):
 
 
 class RenderDemonstrations(RenderTemplate):
+    """
+    @TODO: add docs
+    """
+
     demos_field: str
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         demos = instance.get(self.demos_field, [])
 
         processed_demos = []
@@ -78,9 +93,15 @@ class RenderDemonstrations(RenderTemplate):
 
 
 class RenderInstruction(Renderer, StreamInstanceOperator):
+    """
+    @TODO: add docs
+    """
+
     instruction: Instruction
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         if self.instruction is not None:
             instance["instruction"] = self.instruction()
         else:
@@ -89,19 +110,31 @@ class RenderInstruction(Renderer, StreamInstanceOperator):
 
 
 class RenderFormat(Renderer, StreamInstanceOperator):
+    """
+    @TODO: add docs
+    """
+
     format: Format
     demos_field: str = None
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         demos_instances = instance.pop(self.demos_field, None)
         if demos_instances is not None:
-            instance["source"] = self.format.format(instance, demos_instances=demos_instances)
+            instance["source"] = self.format.format(
+                instance, demos_instances=demos_instances
+            )
         else:
             instance["source"] = self.format.format(instance)
         return instance
 
 
 class StandardRenderer(Renderer, SequntialOperator):
+    """
+    @TODO: add docs
+    """
+
     template: Template
     instruction: Instruction = None
     demos_field: str = None

@@ -3,13 +3,12 @@ import string
 import uuid
 from abc import ABC, abstractmethod
 from collections import Counter
-from dataclasses import field
 from typing import Any, Dict, Generator, List, Optional, Tuple
 
 import evaluate
 import numpy
 
-from .dataclass import InternalField, OptionalField
+from .dataclass import Field, InternalField, OptionalField
 from .operator import (
     MultiStreamOperator,
     SingleStreamOperator,
@@ -20,24 +19,26 @@ from .operators import CopyFields
 from .stream import MultiStream, Stream
 
 
-def abstract_factory():
-    return {}
-
-
-def abstract_field():
-    return field(default_factory=abstract_factory)
-
-
 class UpdateStream(StreamInstanceOperator):
+    """
+    @TODO: add docs
+    """
+
     update: dict
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         instance.update(self.update)
         return instance
 
 
 # TODO: currently we have two classes with this name. metric.Metric and matrics.Metric...
 class Metric(ABC):
+    """
+    @TODO: add docs
+    """
+
     @property
     @abstractmethod
     def main_score(self):
@@ -45,6 +46,10 @@ class Metric(ABC):
 
 
 class GlobalMetric(SingleStreamOperator, Metric):
+    """
+    @TODO: add docs
+    """
+
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
         references = []
         predictions = []
@@ -62,7 +67,7 @@ class GlobalMetric(SingleStreamOperator, Metric):
 
             try:
                 instance_score = self._compute([refs], [pred])
-            except:
+            except Exception:
                 instance_score = {"score": None, "score_name": self.main_score}
 
                 if isinstance(self.main_score, str) and self.main_score is not None:
@@ -94,10 +99,14 @@ class GlobalMetric(SingleStreamOperator, Metric):
 
 
 class BulkInstanceMetric(SingleStreamOperator, Metric):
+    """
+    @TODO: add docs
+    """
+
     main_score: str
     reduction_map: Dict[str, List[str]]
 
-    implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
+    implemented_reductions: List[str] = Field(default_factory=lambda: ["mean"])
 
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
         global_score = {}
@@ -105,7 +114,13 @@ class BulkInstanceMetric(SingleStreamOperator, Metric):
 
         # consume the stream
         references, predictions = map(
-            list, zip(*[(instance["references"], instance["prediction"]) for instance in stream])
+            list,
+            zip(
+                *[
+                    (instance["references"], instance["prediction"])
+                    for instance in stream
+                ]
+            ),
         )
 
         # compute the metric over all refs and preds
@@ -135,7 +150,9 @@ class BulkInstanceMetric(SingleStreamOperator, Metric):
                 from statistics import mean
 
                 for field in fields:
-                    global_score[field] = mean([instance["score"]["instance"][field] for instance in instances])
+                    global_score[field] = mean(
+                        [instance["score"]["instance"][field] for instance in instances]
+                    )
                     if field == self.main_score:
                         global_score["score"] = global_score[field]
                         global_score["score_name"] = self.main_score
@@ -144,12 +161,18 @@ class BulkInstanceMetric(SingleStreamOperator, Metric):
             yield instance
 
     @abstractmethod
-    def compute(self, references: List[List[Any]], predictions: List[Any]) -> Dict[str, Any]:
+    def compute(
+        self, references: List[List[Any]], predictions: List[Any]
+    ) -> Dict[str, Any]:
         pass
 
 
 class InstanceMetric(SingleStreamOperator, Metric):
-    implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
+    """
+    @TODO: add docs
+    """
+
+    implemented_reductions: List[str] = Field(default_factory=lambda: ["mean"])
 
     @property
     @abstractmethod
@@ -183,7 +206,9 @@ class InstanceMetric(SingleStreamOperator, Metric):
                 from statistics import mean
 
                 for field in fields:
-                    global_score[field] = mean([instance["score"]["instance"][field] for instance in instances])
+                    global_score[field] = mean(
+                        [instance["score"]["instance"][field] for instance in instances]
+                    )
                     if field == self.main_score:
                         global_score["score"] = global_score[field]
                         global_score["score_name"] = self.main_score
@@ -203,6 +228,10 @@ class InstanceMetric(SingleStreamOperator, Metric):
 
 
 class Squad(GlobalMetric):
+    """
+    @TODO: add docs
+    """
+
     _metric = None
     main_score = "f1"
     metric = "squad"
@@ -214,17 +243,27 @@ class Squad(GlobalMetric):
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
         ids = [str(uuid.uuid4()).replace("-", "") for _ in range(len(predictions))]
         formatted_predictions = [
-            {"prediction_text": prediction, "id": ids[i]} for i, prediction in enumerate(predictions)
+            {"prediction_text": prediction, "id": ids[i]}
+            for i, prediction in enumerate(predictions)
         ]
         formatted_references = [
-            {"answers": {"answer_start": [-1], "text": reference}, "id": ids[i]}
+            {
+                "answers": {"answer_start": [-1], "text": reference},
+                "id": ids[i],
+            }
             for i, reference in enumerate(references)
         ]
 
-        return self._metric.compute(predictions=formatted_predictions, references=formatted_references)
+        return self._metric.compute(
+            predictions=formatted_predictions, references=formatted_references
+        )
 
 
 class SingleReferenceInstanceMetric(InstanceMetric):
+    """
+    @TODO: add docs
+    """
+
     def _compute(self, references: List[str], prediction: str) -> dict:
         result = self.compute(references[0], prediction)
         result["score"] = result[self.main_score]
@@ -237,6 +276,10 @@ class SingleReferenceInstanceMetric(InstanceMetric):
 
 
 class Accuracy(SingleReferenceInstanceMetric):
+    """
+    @TODO: add docs
+    """
+
     reduction_map = {"mean": ["accuracy"]}
     main_score = "accuracy"
 
@@ -245,9 +288,15 @@ class Accuracy(SingleReferenceInstanceMetric):
 
 
 class MetricPipeline(MultiStreamOperator, Metric):
+    """
+    @TODO: add docs
+    """
+
     main_score: str = None
-    preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
-    postpreprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
+    preprocess_steps: Optional[List[StreamingOperator]] = Field(default_factory=list)
+    postpreprocess_steps: Optional[List[StreamingOperator]] = Field(
+        default_factory=list
+    )
     metric: Metric = None
 
     def verify(self):
@@ -274,9 +323,15 @@ class MetricPipeline(MultiStreamOperator, Metric):
 
 
 class HuggingfaceMetric(GlobalMetric):
+    """
+    @TODO: add docs
+    """
+
     hf_metric_name: str = None
     main_score: str = None  # The main score returned from the metric
-    hf_main_score: str = None  # USed if HF returns uses a different score name for the main metric
+    hf_main_score: str = (
+        None  # USed if HF returns uses a different score name for the main metric
+    )
 
     scale: float = 1.0  # optional scaling of main results
     scaled_fields: list = None
@@ -285,29 +340,45 @@ class HuggingfaceMetric(GlobalMetric):
 
     def prepare(self):
         super().prepare()
-        self.metric = evaluate.load(self.hf_metric_name, experiment_id=self.experiment_id)
+        self.metric = evaluate.load(
+            self.hf_metric_name, experiment_id=self.experiment_id
+        )
 
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
-        result = self.metric.compute(predictions=predictions, references=references, **self.hf_compute_args)
+        result = self.metric.compute(
+            predictions=predictions,
+            references=references,
+            **self.hf_compute_args,
+        )
         if self.hf_main_score:
             result[self.main_score] = result[self.hf_main_score]
             del result[self.hf_main_score]
         if self.scale != 1.0:
-            assert self.scaled_fields is not None, f"Scaling factor was set to {self.scale}, but no fields specified"
+            assert (
+                self.scaled_fields is not None
+            ), f"Scaling factor was set to {self.scale}, but no fields specified"
             for key in self.scaled_fields:
-                assert key in result, f"Trying to scale field '{key}' which is not in results of metrics: {result}"
+                assert (
+                    key in result
+                ), f"Trying to scale field '{key}' which is not in results of metrics: {result}"
                 if isinstance(result[key], list):
                     assert all(
                         isinstance(v, float) for v in result[key]
                     ), "Not all scaled field '{key}' values are floats: {result[key]}"
                     result[key] = [v / self.scale for v in result[key]]
                 else:
-                    assert isinstance(result[key], float), "Scaled field '{key}' is not float: {result[key]}"
+                    assert isinstance(
+                        result[key], float
+                    ), "Scaled field '{key}' is not float: {result[key]}"
                     result[key] /= self.scale
         return result
 
 
 class HuggingfaceBulkMetric(BulkInstanceMetric):
+    """
+    @TODO: add docs
+    """
+
     hf_metric_name: str
 
     hf_metric_fields: List[str]
@@ -317,8 +388,14 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
         super().prepare()
         self.metric = evaluate.load(self.hf_metric_name)
 
-    def compute(self, references: List[List[str]], predictions: List[str]) -> List[Dict[str, Any]]:
-        scores = self.metric.compute(predictions=predictions, references=references, **self.hf_compute_args)
+    def compute(
+        self, references: List[List[str]], predictions: List[str]
+    ) -> List[Dict[str, Any]]:
+        scores = self.metric.compute(
+            predictions=predictions,
+            references=references,
+            **self.hf_compute_args,
+        )
 
         # convert dict of lists to a list of dicts
         results = [{} for _ in range(len(scores[self.hf_metric_fields[0]]))]
@@ -331,6 +408,10 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
 
 
 class F1(GlobalMetric):
+    """
+    @TODO: add docs
+    """
+
     _metric = None
     main_score = "f1_macro"
     average = None  # Report per class then aggregate by mean
@@ -353,12 +434,19 @@ class F1(GlobalMetric):
         ), "Only a single reference per prediction is allowed in F1 metric"
         self.str_to_id = {}
         self.id_to_str = {}
-        formatted_references = [self.get_str_id(reference[0]) for reference in references]
-        unique_labels = self.str_to_id.keys()
-        formatted_predictions = [self.get_str_id(prediction) for prediction in predictions]
+        formatted_references = [
+            self.get_str_id(reference[0]) for reference in references
+        ]
+        # unique_labels = self.str_to_id.keys()
+        formatted_predictions = [
+            self.get_str_id(prediction) for prediction in predictions
+        ]
         labels = list(set(formatted_references))
         result = self._metric.compute(
-            predictions=formatted_predictions, references=formatted_references, labels=labels, average=self.average
+            predictions=formatted_predictions,
+            references=formatted_references,
+            labels=labels,
+            average=self.average,
         )
         if isinstance(result["f1"], numpy.ndarray):
             from statistics import mean
@@ -372,15 +460,27 @@ class F1(GlobalMetric):
 
 
 class F1Micro(F1):
+    """
+    @TODO: add docs
+    """
+
     main_score = "f1_micro"
     average = "micro"
 
 
 class F1Macro(F1):
+    """
+    @TODO: add docs
+    """
+
     main_score = "f1_macro"
 
 
 class F1MultiLabel(GlobalMetric):
+    """
+    @TODO: add docs
+    """
+
     _metric = None
     main_score = "f1_macro"
     average = None  # Report per class then aggregate by mean
@@ -391,7 +491,7 @@ class F1MultiLabel(GlobalMetric):
         self._metric = evaluate.load("f1", "multilabel")
 
     def add_str_to_id(self, str):
-        if not str in self.str_to_id:
+        if str not in self.str_to_id:
             id = len(self.str_to_id)
             self.str_to_id[str] = id
             self.id_to_str[id] = str
@@ -412,9 +512,9 @@ class F1MultiLabel(GlobalMetric):
         ), "Only a single reference per prediction is allowed in F1 metric"
         references = [reference[0] for reference in references]
         labels = [
-            l
-            for l in set([label for reference in references for label in reference])
-            if l not in self.classes_to_ignore
+            lbl
+            for lbl in set([label for reference in references for label in reference])
+            if lbl not in self.classes_to_ignore
         ]
         # if no classes are left then F1 is not defined
         # (e.g. only "none" in references)
@@ -423,11 +523,17 @@ class F1MultiLabel(GlobalMetric):
 
         for label in labels:
             self.add_str_to_id(label)
-        formatted_references = [self.get_one_hot_vector(reference) for reference in references]
-        formatted_predictions = [self.get_one_hot_vector(prediction) for prediction in predictions]
+        formatted_references = [
+            self.get_one_hot_vector(reference) for reference in references
+        ]
+        formatted_predictions = [
+            self.get_one_hot_vector(prediction) for prediction in predictions
+        ]
 
-        # There is odd behavior in scikit-learn that when passing a one-hot vector with a single
-        # element, it is treated a class identifier. Therefore, we add labels=[1] to limit to only
+        # There is odd behavior in scikit-learn that when passing a one-hot
+        # vector with a single
+        # element, it is treated a class identifier. Therefore, we add
+        # labels=[1] to limit to only
         # to this class.
         if len(labels) == 1:
             labels_param = [1]
@@ -455,16 +561,28 @@ class F1MultiLabel(GlobalMetric):
 
 
 class F1MicroMultiLabel(F1MultiLabel):
+    """
+    @TODO: add docs
+    """
+
     main_score = "f1_micro"
     average = "micro"
 
 
 class F1MacroMultiLabel(F1MultiLabel):
+    """
+    @TODO: add docs
+    """
+
     main_score = "f1_macro"
     average = None
 
 
 class Rouge(HuggingfaceMetric):
+    """
+    @TODO: add docs
+    """
+
     hf_metric_name = "rouge"
     main_score = "rougeL"
     scale = 1.0
@@ -475,7 +593,12 @@ class Rouge(HuggingfaceMetric):
     sent_split_newline: bool = True
 
     def prepare(self):
-        self.hf_compute_args.update({"use_aggregator": self.use_aggregator, "rouge_types": self.rouge_types})
+        self.hf_compute_args.update(
+            {
+                "use_aggregator": self.use_aggregator,
+                "rouge_types": self.rouge_types,
+            }
+        )
 
         super().prepare()
         import nltk
@@ -485,13 +608,23 @@ class Rouge(HuggingfaceMetric):
 
     def compute(self, references, predictions):
         if self.sent_split_newline:
-            predictions = ["\n".join(self.sent_tokenize(prediction.strip())) for prediction in predictions]
-            references = [["\n".join(self.sent_tokenize(r.strip())) for r in reference] for reference in references]
+            predictions = [
+                "\n".join(self.sent_tokenize(prediction.strip()))
+                for prediction in predictions
+            ]
+            references = [
+                ["\n".join(self.sent_tokenize(r.strip())) for r in reference]
+                for reference in references
+            ]
         return super().compute(references, predictions)
 
 
 # Computes chat edit distance, ignoring whitespace
 class CharEditDistanceAccuracy(SingleReferenceInstanceMetric):
+    """
+    @TODO: add docs
+    """
+
     reduction_map = {"mean": ["char_edit_dist_accuracy"]}
     main_score = "char_edit_dist_accuracy"
 
@@ -511,6 +644,10 @@ class CharEditDistanceAccuracy(SingleReferenceInstanceMetric):
 
 
 class Wer(HuggingfaceMetric):
+    """
+    @TODO: add docs
+    """
+
     hf_metric_name = "wer"
     main_score = "wer"
 
@@ -519,11 +656,17 @@ class Wer(HuggingfaceMetric):
             len(reference) == 1 for reference in references
         ), "Only single reference per prediction is allowed in wer metric"
         formatted_references = [reference[0] for reference in references]
-        result = self.metric.compute(predictions=predictions, references=formatted_references)
+        result = self.metric.compute(
+            predictions=predictions, references=formatted_references
+        )
         return {self.main_score: result}
 
 
 class MatthewsCorrelation(HuggingfaceMetric):
+    """
+    @TODO: add docs
+    """
+
     hf_metric_name = "matthews_correlation"
     main_score = "matthews_correlation"
     str_to_id: dict = InternalField(default_factory=dict)
@@ -535,13 +678,23 @@ class MatthewsCorrelation(HuggingfaceMetric):
         return self.str_to_id[str]
 
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
-        formatted_references = [self.get_str_id(reference[0]) for reference in references]
-        formatted_predictions = [self.get_str_id(prediction) for prediction in predictions]
-        result = self.metric.compute(predictions=formatted_predictions, references=formatted_references)
+        formatted_references = [
+            self.get_str_id(reference[0]) for reference in references
+        ]
+        formatted_predictions = [
+            self.get_str_id(prediction) for prediction in predictions
+        ]
+        result = self.metric.compute(
+            predictions=formatted_predictions, references=formatted_references
+        )
         return result
 
 
 class CustomF1(GlobalMetric):
+    """
+    @TODO: add docs
+    """
+
     main_score = "f1_micro"
     classes = None
 
@@ -553,14 +706,22 @@ class CustomF1(GlobalMetric):
     def get_element_representation(self, element):
         pass
 
-    def group_elements(self, l):
+    def group_elements(self, lbl):
         return {
-            k: Counter([self.get_element_representation(value) for value in l if self.get_element_group(value) == k])
-            for k in set([self.get_element_group(e) for e in l])
+            k: Counter(
+                [
+                    self.get_element_representation(value)
+                    for value in lbl
+                    if self.get_element_group(value) == k
+                ]
+            )
+            for k in set([self.get_element_group(e) for e in lbl])
         }
 
     def calculate_groups_ratio(self, actual_group, total_group):
-        return sum([min(actual_group[k], total_group[k]) for k in actual_group.keys()]), sum(actual_group.values())
+        return sum(
+            [min(actual_group[k], total_group[k]) for k in actual_group.keys()]
+        ), sum(actual_group.values())
 
     def f1(self, pn, pd, rn, rd):
         precision = 1.0 if pn == 0 and pd == 0 else pn / pd
@@ -576,17 +737,22 @@ class CustomF1(GlobalMetric):
             references = [element[0] for element in references]
 
         assert len(references) == len(predictions), (
-            f"references size ({len(references)})" f" doesn't mach predictions sise ({len(references)})."
+            f"references size ({len(references)})"
+            f" doesn't mach predictions sise ({len(references)})."
         )
         if self.classes is None:
-            classes = set([self.get_element_group(e) for sublist in references for e in sublist])
+            classes = set(
+                [self.get_element_group(e) for sublist in references for e in sublist]
+            )
         else:
             classes = self.classes
         groups_statistics = dict()
         for references_batch, predictions_batch in zip(references, predictions):
             grouped_references = self.group_elements(references_batch)
             grouped_predictions = self.group_elements(predictions_batch)
-            all_groups = set(grouped_references.keys()).union(grouped_predictions.keys())
+            all_groups = set(grouped_references.keys()).union(
+                grouped_predictions.keys()
+            )
             for group in all_groups:
                 if group not in groups_statistics:
                     groups_statistics[group] = {
@@ -598,10 +764,12 @@ class CustomF1(GlobalMetric):
                 references_by_group = grouped_references.get(group, Counter([]))
                 predictions_by_group = grouped_predictions.get(group, Counter([]))
                 pn, pd = self.calculate_groups_ratio(
-                    actual_group=predictions_by_group, total_group=references_by_group
+                    actual_group=predictions_by_group,
+                    total_group=references_by_group,
                 )
                 rn, rd = self.calculate_groups_ratio(
-                    actual_group=references_by_group, total_group=predictions_by_group
+                    actual_group=references_by_group,
+                    total_group=predictions_by_group,
                 )
                 groups_statistics[group]["precision_numerator"] += pn
                 groups_statistics[group]["precision_denominator"] += pd
@@ -618,7 +786,12 @@ class CustomF1(GlobalMetric):
                 groups_statistics[group]["recall_numerator"],
                 groups_statistics[group]["recall_denominator"],
             )
-            pn_total, pd_total, rn_total, rd_total = pn_total + pn, pd_total + pd, rn_total + rn, rd_total + rd
+            pn_total, pd_total, rn_total, rd_total = (
+                pn_total + pn,
+                pd_total + pd,
+                rn_total + rn,
+                rd_total + rd,
+            )
             if group in classes:
                 result[f"f1_{group}"] = self.f1(pn, pd, rn, rd)
             else:
@@ -632,12 +805,18 @@ class CustomF1(GlobalMetric):
         if amount_of_predictions == 0:
             result["in_classes_support"] = 1.0
         else:
-            result["in_classes_support"] = 1.0 - num_of_unknown_class_predictions / amount_of_predictions
-        result[f"f1_micro"] = self.f1(pn_total, pd_total, rn_total, rd_total)
+            result["in_classes_support"] = (
+                1.0 - num_of_unknown_class_predictions / amount_of_predictions
+            )
+        result["f1_micro"] = self.f1(pn_total, pd_total, rn_total, rd_total)
         return result
 
 
 class NER(CustomF1):
+    """
+    @TODO: add docs
+    """
+
     def get_element_group(self, element):
         return element[1]
 
@@ -665,14 +844,25 @@ def normalize_answer(s):
 
 
 class TokenOverlap(InstanceMetric):
+    """
+    @TODO: add docs
+    """
+
     reduction_map = {"mean": ["f1", "precision", "recall"]}
     main_score = "f1"
 
     def compute(self, references: List[Any], prediction: Any) -> dict:
-        results = [self._compute_single_ref(reference, prediction) for reference in references]
-        return {measure: max(r[i] for r in results) for i, measure in enumerate(["precision", "recall", "f1"])}
+        results = [
+            self._compute_single_ref(reference, prediction) for reference in references
+        ]
+        return {
+            measure: max(r[i] for r in results)
+            for i, measure in enumerate(["precision", "recall", "f1"])
+        }
 
-    def _compute_single_ref(self, reference: Any, prediction: Any) -> Tuple[float, float, float]:
+    def _compute_single_ref(
+        self, reference: Any, prediction: Any
+    ) -> Tuple[float, float, float]:
         prediction_tokens = normalize_answer(prediction).split()
         reference_tokens = normalize_answer(reference).split()
         common = Counter(prediction_tokens) & Counter(reference_tokens)
@@ -687,6 +877,10 @@ class TokenOverlap(InstanceMetric):
 
 
 class BertScore(HuggingfaceBulkMetric):
+    """
+    @TODO: add docs
+    """
+
     hf_metric_name = "bertscore"
     main_score = "f1"
     reduction_map = {"mean": ["f1", "precision", "recall"]}
@@ -699,6 +893,10 @@ class BertScore(HuggingfaceBulkMetric):
 
 
 class SentenceBert(BulkInstanceMetric):
+    """
+    @TODO: add docs
+    """
+
     reduction_map = {"mean": ["score"]}
     main_score = "score"
     batch_size: int = 32
@@ -728,7 +926,9 @@ class SentenceBert(BulkInstanceMetric):
 
         # compute s-bert embeddings
         preds_emb = self.model.encode(predictions)
-        refs_emb = self.model.encode([ref for ref_group in references for ref in ref_group])
+        refs_emb = self.model.encode(
+            [ref for ref_group in references for ref in ref_group]
+        )
 
         # for each candidate, pick the reference with the highest score
         for pred_emb, ref_group_bounds in zip(preds_emb, ref_group_boundaries):
@@ -739,6 +939,10 @@ class SentenceBert(BulkInstanceMetric):
 
 
 class Reward(BulkInstanceMetric):
+    """
+    @TODO: add docs
+    """
+
     reduction_map = {"mean": ["score"]}
     main_score = "score"
     batch_size: int = 32

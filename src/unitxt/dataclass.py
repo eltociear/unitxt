@@ -1,7 +1,6 @@
 import copy
 import dataclasses
 from abc import ABCMeta
-from copy import deepcopy
 from typing import Any, final
 
 _FIELDS = "__fields__"
@@ -10,7 +9,8 @@ _FIELDS = "__fields__"
 @dataclasses.dataclass
 class Field:
     """
-    An alternative to dataclasses.dataclass decorator for a more flexible field definition.
+    An alternative to dataclasses.dataclass decorator for a more flexible field
+    definition.
 
     Attributes:
         default (Any, optional): Default value for the field. Defaults to None.
@@ -44,18 +44,27 @@ class Field:
 
 @dataclasses.dataclass
 class FinalField(Field):
+    """A Field that is marked as final and cannot be overridden by
+    subclasses."""
+
     def __post_init__(self):
         self.final = True
 
 
 @dataclasses.dataclass
 class RequiredField(Field):
+    """A Field that is marked as required and must be provided when creating an
+    instance."""
+
     def __post_init__(self):
         self.required = True
 
 
 @dataclasses.dataclass
 class OptionalField(Field):
+    """A Field that is optional and either must have a default value or a
+    default factory."""
+
     def __post_init__(self):
         self.required = False
         assert (
@@ -65,18 +74,26 @@ class OptionalField(Field):
 
 @dataclasses.dataclass
 class AbstractField(Field):
+    """A Field that is marked as abstract and must be overridden by any non-
+    abstract subclass."""
+
     def __post_init__(self):
         self.abstract = True
 
 
 @dataclasses.dataclass
 class NonPositionalField(Field):
+    """A Field that cannot be passed as a positional argument."""
+
     def __post_init__(self):
         self.also_positional = False
 
 
 @dataclasses.dataclass
 class InternalField(Field):
+    """An internal Field that is not included in the generated __init__ method
+    and cannot be passed as a positional argument."""
+
     def __post_init__(self):
         self.internal = True
         self.init = False
@@ -84,23 +101,25 @@ class InternalField(Field):
 
 
 class FinalFieldError(TypeError):
-    pass
+    """Raised when trying to override a field that is marked as final."""
 
 
 class RequiredFieldError(TypeError):
-    pass
+    """Raised when a required field is not provided when creating an
+    instance."""
 
 
 class AbstractFieldError(TypeError):
-    pass
+    """Raised when an abstract field is not overridden by a subclass."""
 
 
 class TypeMismatchError(TypeError):
-    pass
+    """Raised when the type of a field does not match its expected type."""
 
 
 class UnexpectedArgumentError(TypeError):
-    pass
+    """Raised when an unexpected argument is provided when creating an
+    instance."""
 
 
 standart_variables = dir(object)
@@ -117,7 +136,11 @@ def is_possible_field(field_name, field_value):
     Returns:
         bool: True if the name-value pair can represent a field, False otherwise.
     """
-    return field_name not in standart_variables and not field_name.startswith("__") and not callable(field_value)
+    return (
+        field_name not in standart_variables
+        and not field_name.startswith("__")
+        and not callable(field_value)
+    )
 
 
 def get_fields(cls, attrs):
@@ -191,15 +214,16 @@ def get_fields(cls, attrs):
 
 
 def is_dataclass(obj):
-    """Returns True if obj is a dataclass or an instance of a
-    dataclass."""
+    """Returns True if obj is a dataclass or an instance of a dataclass."""
     cls = obj if isinstance(obj, type) else type(obj)
     return hasattr(cls, _FIELDS)
 
 
 def class_fields(obj):
     all_fields = fields(obj)
-    return [field for field in all_fields if field.origin_cls == obj.__class__.__qualname__]
+    return [
+        field for field in all_fields if field.origin_cls == obj.__class__.__qualname__
+    ]
 
 
 def fields(cls):
@@ -238,7 +262,9 @@ def get_field_default(field):
 
 
 def asdict(obj):
-    assert is_dataclass(obj), f"{obj} must be a dataclass, got {type(obj)} with bases {obj.__class__.__bases__}"
+    assert is_dataclass(
+        obj
+    ), f"{obj} must be a dataclass, got {type(obj)} with bases {obj.__class__.__bases__}"
     return _asdict_inner(obj)
 
 
@@ -258,6 +284,7 @@ def _asdict_inner(obj):
 class DataclassMeta(ABCMeta):
     """
     Metaclass for Dataclass.
+
     Checks for final fields when a subclass is created.
     """
 
@@ -269,10 +296,11 @@ class DataclassMeta(ABCMeta):
 
 class Dataclass(metaclass=DataclassMeta):
     """
-    Base class for data-like classes that provides additional functionality and control
-    over Python's built-in @dataclasses.dataclass decorator. Other classes can inherit from
-    this class to get the benefits of this implementation. As a base class, it ensures that
-    all subclasses will automatically be data classes.
+    Base class for data-like classes that provides additional functionality and
+    control over Python's built-in @dataclasses.dataclass decorator. Other
+    classes can inherit from this class to get the benefits of this
+    implementation. As a base class, it ensures that all subclasses will
+    automatically be data classes.
 
     The usage and field definitions are similar to Python's built-in @dataclasses.dataclass decorator.
     However, this implementation provides additional classes for defining "final", "required",
@@ -326,7 +354,6 @@ class Dataclass(metaclass=DataclassMeta):
         grand_child = GrandChild()
         print(grand_child.to_dict())
         ```
-
     """
 
     __allow_unexpected_arguments__ = False
@@ -335,15 +362,20 @@ class Dataclass(metaclass=DataclassMeta):
     def __init__(self, *argv, **kwargs):
         """
         Initialize fields based on kwargs.
+
         Checks for abstract fields when an instance is created.
         """
         _init_fields = [field for field in fields(self) if field.init]
         _init_fields_names = [field.name for field in _init_fields]
-        _init_positional_fields_names = [field.name for field in _init_fields if field.also_positional]
+        _init_positional_fields_names = [
+            field.name for field in _init_fields if field.also_positional
+        ]
 
         for name in _init_positional_fields_names[: len(argv)]:
             if name in kwargs:
-                raise TypeError(f"{self.__class__.__name__} got multiple values for argument '{name}'")
+                raise TypeError(
+                    f"{self.__class__.__name__} got multiple values for argument '{name}'"
+                )
 
         expected_unexpected_argv = kwargs.pop("_argv", None)
 
@@ -360,15 +392,22 @@ class Dataclass(metaclass=DataclassMeta):
 
         expected_unexpected_kwargs = kwargs.pop("_kwargs", None)
         unexpected_kwargs = {
-            k: v for k, v in kwargs.items() if k not in _init_fields_names and k not in ["_argv", "_kwargs"]
+            k: v
+            for k, v in kwargs.items()
+            if k not in _init_fields_names and k not in ["_argv", "_kwargs"]
         }
 
         if expected_unexpected_kwargs is not None:
-            intersection = set(unexpected_kwargs.keys()) & set(expected_unexpected_kwargs.keys())
+            intersection = set(unexpected_kwargs.keys()) & set(
+                expected_unexpected_kwargs.keys()
+            )
             assert (
                 len(intersection) == 0
             ), f"Cannot specify the same arguments in both _kwargs and in unexpected keyword arguments. Got {intersection} in both."
-            unexpected_kwargs = {**unexpected_kwargs, **expected_unexpected_kwargs}
+            unexpected_kwargs = {
+                **unexpected_kwargs,
+                **expected_unexpected_kwargs,
+            }
 
         if self.__allow_unexpected_arguments__:
             if len(unexpected_argv) > 0:
@@ -416,31 +455,19 @@ class Dataclass(metaclass=DataclassMeta):
         return True
 
     def __pre_init__(self, **kwargs):
-        """
-        Pre initialization hook.
-        """
-        pass
+        """Pre initialization hook."""
 
     def __post_init__(self):
-        """
-        Post initialization hook.
-        """
-        pass
+        """Post initialization hook."""
 
     def _to_raw_dict(self):
-        """
-        Convert to raw dict
-        """
+        """Convert to raw dict."""
         return {field.name: getattr(self, field.name) for field in fields(self)}
 
     def to_dict(self):
-        """
-        Convert to dict.
-        """
+        """Convert to dict."""
         return _asdict_inner(self._to_raw_dict())
 
     def __repr__(self) -> str:
-        """
-        String representation.
-        """
+        """String representation."""
         return f"{self.__class__.__name__}({', '.join([f'{field.name}={repr(getattr(self, field.name))}' for field in fields(self)])})"

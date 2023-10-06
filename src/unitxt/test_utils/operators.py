@@ -7,7 +7,12 @@ from ..type_utils import isoftype
 from .artifact import test_artfifact_saving_and_loading
 
 
-def apply_operator(operator: StreamingOperator, inputs: List[dict], return_multi_stream=False, return_stream=False):
+def apply_operator(
+    operator: StreamingOperator,
+    inputs: List[dict],
+    return_multi_stream=False,
+    return_stream=False,
+):
     if inputs is not None:
         multi_stream = MultiStream({"test": inputs})
         output_multi_stream = operator(multi_stream)
@@ -22,12 +27,18 @@ def apply_operator(operator: StreamingOperator, inputs: List[dict], return_multi
 
 
 def test_operator(
-    operator: StreamingOperator, inputs: List[dict], targets: List[dict], tester=None, sort_outputs_by=None
+    operator: StreamingOperator,
+    inputs: List[dict],
+    targets: List[dict],
+    tester=None,
+    sort_outputs_by=None,
 ):
     test_artfifact_saving_and_loading(operator, tester=tester)
 
     assert isoftype(operator, StreamingOperator), "operator must be an Operator"
-    assert inputs is None or isoftype(inputs, List[dict]), "inputs must be a list of dicts or None for stream source"
+    assert inputs is None or isoftype(
+        inputs, List[dict]
+    ), "inputs must be a list of dicts or None for stream source"
     assert isoftype(targets, List[dict]), "outputs must be a list of dicts"
 
     outputs = apply_operator(operator, inputs)
@@ -40,7 +51,9 @@ def test_operator(
 
         for output, target in zip(outputs, targets):
             if json.dumps(output, sort_keys=True) == json.dumps(target, sort_keys=True):
-                errors.append(f"input and output must be equal, got <{output}> =/= <{target}>")
+                errors.append(
+                    f"input and output must be equal, got <{output}> =/= <{target}>"
+                )
 
         if len(errors) > 0:
             raise AssertionError("\n".join(errors))

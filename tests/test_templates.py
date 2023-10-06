@@ -1,9 +1,7 @@
 import unittest
 
 from src.unitxt.artifact import fetch_artifact
-from src.unitxt.processors import RegexParser
 from src.unitxt.templates import (
-    AutoInputOutputTemplate,
     InputOutputTemplate,
     KeyValTemplate,
     MultiLabelTemplate,
@@ -11,7 +9,6 @@ from src.unitxt.templates import (
     SpanLabelingTemplate,
 )
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
-from src.unitxt.test_utils.metrics import apply_metric
 
 register_local_catalog_for_tests()
 
@@ -37,11 +34,23 @@ class TestTemplates(unittest.TestCase):
             },
         ]
 
-        processed_targets = ["John\,\: Doe: PER, New York: LOC, Goo\:gle: ORG", "None"]
+        processed_targets = [
+            "John\,\: Doe: PER, New York: LOC, Goo\:gle: ORG",
+            "None",
+        ]
 
-        parsed_targets = [[("John\\,\\: Doe", "PER"), ("New York", "LOC"), ("Goo\\:gle", "ORG")], []]
+        parsed_targets = [
+            [
+                ("John\\,\\: Doe", "PER"),
+                ("New York", "LOC"),
+                ("Goo\\:gle", "ORG"),
+            ],
+            [],
+        ]
 
-        for input, processed_target, parsed_target in zip(inputs, processed_targets, parsed_targets):
+        for input, processed_target, parsed_target in zip(
+            inputs, processed_targets, parsed_targets
+        ):
             processed = template.process_outputs(input)
             self.assertEqual(processed, processed_target)
             parsed = parser.process(processed)
@@ -61,7 +70,9 @@ class TestTemplates(unittest.TestCase):
 
         parsed_targets = [["cat", "dog"], ["man", "woman", "dog"]]
 
-        for input, processed_target, parsed_target in zip(inputs, processed_targets, parsed_targets):
+        for input, processed_target, parsed_target in zip(
+            inputs, processed_targets, parsed_targets
+        ):
             processed = template.process_outputs(input)
             self.assertEqual(processed, processed_target)
             parsed = parser.process(processed)
@@ -82,7 +93,9 @@ class TestTemplates(unittest.TestCase):
 
         parsed_targets = ["cat", "man", "dog"]
 
-        for input, processed_target, parsed_target in zip(inputs, processed_targets, parsed_targets):
+        for input, processed_target, parsed_target in zip(
+            inputs, processed_targets, parsed_targets
+        ):
             processed = template.process_outputs(input)
             self.assertEqual(processed, processed_target)
             parsed = parser.process(processed)
@@ -91,7 +104,9 @@ class TestTemplates(unittest.TestCase):
     def test_span_labeling_template_one_entity_escaping(self):
         parser, _ = fetch_artifact("processors.to_span_label_pairs_surface_only")
 
-        template = SpanLabelingTemplate(labels_support=["PER"], span_label_format="{span}")
+        template = SpanLabelingTemplate(
+            labels_support=["PER"], span_label_format="{span}"
+        )
 
         inputs = [
             {
@@ -112,7 +127,9 @@ class TestTemplates(unittest.TestCase):
 
         parsed_targets = [[("John\\,\\: Doe", ""), ("New York", "")], []]
 
-        for input, processed_target, parsed_target in zip(inputs, processed_targets, parsed_targets):
+        for input, processed_target, parsed_target in zip(
+            inputs, processed_targets, parsed_targets
+        ):
             processed = template.process_outputs(input)
             self.assertEqual(processed, processed_target)
             parsed = parser.process(processed)
@@ -120,7 +137,9 @@ class TestTemplates(unittest.TestCase):
 
     def test_span_labeling_json_template(self):
         postprocessor1, _ = fetch_artifact("processors.load_json")
-        postprocessor2, _ = fetch_artifact("processors.dict_of_lists_to_value_key_pairs")
+        postprocessor2, _ = fetch_artifact(
+            "processors.dict_of_lists_to_value_key_pairs"
+        )
 
         template = SpanLabelingJsonTemplate()
 
@@ -139,10 +158,19 @@ class TestTemplates(unittest.TestCase):
             },
         ]
 
-        processed_targets = ['{"PER": ["John,: Doe", "New York"], "ORG": ["Goo:gle"]}', "None"]
+        processed_targets = [
+            '{"PER": ["John,: Doe", "New York"], "ORG": ["Goo:gle"]}',
+            "None",
+        ]
 
-        post1_targets = [{"PER": ["John,: Doe", "New York"], "ORG": ["Goo:gle"]}, []]
-        post2_targets = [[("John,: Doe", "PER"), ("New York", "PER"), ("Goo:gle", "ORG")], []]
+        post1_targets = [
+            {"PER": ["John,: Doe", "New York"], "ORG": ["Goo:gle"]},
+            [],
+        ]
+        post2_targets = [
+            [("John,: Doe", "PER"), ("New York", "PER"), ("Goo:gle", "ORG")],
+            [],
+        ]
 
         for input, processed_target, post_target1, post_target2 in zip(
             inputs, processed_targets, post1_targets, post2_targets
@@ -156,14 +184,23 @@ class TestTemplates(unittest.TestCase):
 
     def test_span_labeling_json_template_errors(self):
         postprocessor1, _ = fetch_artifact("processors.load_json")
-        postprocessor2, _ = fetch_artifact("processors.dict_of_lists_to_value_key_pairs")
+        postprocessor2, _ = fetch_artifact(
+            "processors.dict_of_lists_to_value_key_pairs"
+        )
 
-        predictions = ["{}", '{"d":{"b": "c"}}', '{dll:"dkk"}', '["djje", "djjjd"]']
+        predictions = [
+            "{}",
+            '{"d":{"b": "c"}}',
+            '{dll:"dkk"}',
+            '["djje", "djjjd"]',
+        ]
 
         post1_targets = [{}, {"d": {"b": "c"}}, [], ["djje", "djjjd"]]
         post2_targets = [[], [("b", "d")], [], []]
 
-        for pred, post_target1, post_target2 in zip(predictions, post1_targets, post2_targets):
+        for pred, post_target1, post_target2 in zip(
+            predictions, post1_targets, post2_targets
+        ):
             post1 = postprocessor1.process(pred)
             self.assertEqual(post1, post_target1)
             post2 = postprocessor2.process(post1)
@@ -174,7 +211,9 @@ class TestTemplates(unittest.TestCase):
 
         dic = {"hello": "world", "str_list": ["djjd", "djjd"]}
 
-        result = template.process_dict(dic, key_val_sep=": ", pairs_sep=", ", use_keys=True)
+        result = template.process_dict(
+            dic, key_val_sep=": ", pairs_sep=", ", use_keys=True
+        )
         target = "hello: world, str_list: djjd, djjd"
         self.assertEqual(result, target)
 
@@ -183,6 +222,8 @@ class TestTemplates(unittest.TestCase):
 
         dic = {"hello": "world", "int_list": [0, 1]}
 
-        result = template.process_dict(dic, key_val_sep=": ", pairs_sep=", ", use_keys=True)
+        result = template.process_dict(
+            dic, key_val_sep=": ", pairs_sep=", ", use_keys=True
+        )
         target = "hello: world, int_list: 0, 1"
         self.assertEqual(result, target)

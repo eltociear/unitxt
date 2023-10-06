@@ -3,16 +3,20 @@ import inspect
 import json
 import os
 import pkgutil
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from copy import deepcopy
-from typing import Any, Dict, List, Union, final
+from typing import Dict, List, Union, final
 
-from .dataclass import Dataclass, Field, asdict, fields
+from .dataclass import Dataclass, Field, fields
 from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import issubtype
 
 
 class Artifactories(object):
+    """
+    @TODO: add docs
+    """
+
     def __new__(cls):
         if not hasattr(cls, "instance"):
             cls.instance = super(Artifactories, cls).__new__(cls)
@@ -27,15 +31,27 @@ class Artifactories(object):
         return next(self.artifactories)
 
     def register(self, artifactory):
-        assert isinstance(artifactory, Artifactory), "Artifactory must be an instance of Artifactory"
-        assert hasattr(artifactory, "__contains__"), "Artifactory must have __contains__ method"
-        assert hasattr(artifactory, "__getitem__"), "Artifactory must have __getitem__ method"
+        assert isinstance(
+            artifactory, Artifactory
+        ), "Artifactory must be an instance of Artifactory"
+        assert hasattr(
+            artifactory, "__contains__"
+        ), "Artifactory must have __contains__ method"
+        assert hasattr(
+            artifactory, "__getitem__"
+        ), "Artifactory must have __getitem__ method"
         self.artifactories = [artifactory] + self.artifactories
 
     def unregister(self, artifactory):
-        assert isinstance(artifactory, Artifactory), "Artifactory must be an instance of Artifactory"
-        assert hasattr(artifactory, "__contains__"), "Artifactory must have __contains__ method"
-        assert hasattr(artifactory, "__getitem__"), "Artifactory must have __getitem__ method"
+        assert isinstance(
+            artifactory, Artifactory
+        ), "Artifactory must be an instance of Artifactory"
+        assert hasattr(
+            artifactory, "__contains__"
+        ), "Artifactory must have __contains__ method"
+        assert hasattr(
+            artifactory, "__getitem__"
+        ), "Artifactory must have __getitem__ method"
         self.artifactories.remove(artifactory)
 
     def reset(self):
@@ -63,6 +79,10 @@ def get_closest_artifact_type(type):
 
 
 class UnrecognizedArtifactType(ValueError):
+    """
+    @TODO: add docs
+    """
+
     def __init__(self, type) -> None:
         maybe_class = "".join(word.capitalize() for word in type.split("_"))
         message = f"'{type}' is not a recognized artifact 'type'. Make sure a the class defined this type (Probably called '{maybe_class}' or similar) is defined and/or imported anywhere in the code executed."
@@ -73,12 +93,22 @@ class UnrecognizedArtifactType(ValueError):
 
 
 class MissingArtifactType(ValueError):
+    """
+    @TODO: add docs
+    """
+
     def __init__(self, dic) -> None:
-        message = f"Missing 'type' parameter. Expected 'type' in artifact dict, got {dic}"
+        message = (
+            f"Missing 'type' parameter. Expected 'type' in artifact dict, got {dic}"
+        )
         super().__init__(message)
 
 
 class Artifact(Dataclass):
+    """
+    @TODO: add docs
+    """
+
     type: str = Field(default=None, final=True, init=False)
 
     _class_register = {}
@@ -90,7 +120,9 @@ class Artifact(Dataclass):
     @classmethod
     def verify_artifact_dict(cls, d):
         if not isinstance(d, dict):
-            raise ValueError(f"Artifact dict <{d}> must be of type 'dict', got '{type(d)}'.")
+            raise ValueError(
+                f"Artifact dict <{d}> must be of type 'dict', got '{type(d)}'."
+            )
         if "type" not in d:
             raise MissingArtifactType(d)
         if not cls.is_registered_type(d["type"]):
@@ -114,7 +146,8 @@ class Artifact(Dataclass):
         if cls.is_registered_type(snake_case_key):
             assert (
                 cls._class_register[snake_case_key] == artifact_class
-            ), f"Artifact class name must be unique, {snake_case_key} already exists for {cls._class_register[snake_case_key]}"
+            ), f"Artifact class name must be unique, {snake_case_key} already \
+                exists for {cls._class_register[snake_case_key]}"
 
             return snake_case_key
 
@@ -186,7 +219,10 @@ class Artifact(Dataclass):
         self.type = self.register_class(self.__class__)
 
         for field in fields(self):
-            if issubtype(field.type, Union[Artifact, List[Artifact], Dict[str, Artifact]]):
+            if issubtype(
+                field.type,
+                Union[Artifact, List[Artifact], Dict[str, Artifact]],
+            ):
                 value = getattr(self, field.name)
                 value = map_values_in_place(value, maybe_recover_artifact)
                 setattr(self, field.name, value)
@@ -205,12 +241,20 @@ class Artifact(Dataclass):
 
 
 class ArtifactList(list, Artifact):
+    """
+    @TODO: add docs
+    """
+
     def prepare(self):
         for artifact in self:
             artifact.prepare()
 
 
 class Artifactory(Artifact):
+    """
+    @TODO: add docs
+    """
+
     @abstractmethod
     def __contains__(self, name: str) -> bool:
         pass
@@ -221,6 +265,10 @@ class Artifactory(Artifact):
 
 
 class UnitxtArtifactNotFoundError(Exception):
+    """
+    @TODO: add docs
+    """
+
     def __init__(self, name, artifactories):
         self.name = name
         self.artifactories = artifactories

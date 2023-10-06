@@ -1,23 +1,32 @@
 import json
 from abc import ABC, abstractmethod
 from dataclasses import field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
 from .artifact import Artifact
+from .collections import ListCollection
 from .dataclass import NonPositionalField
 from .instructions import Instruction, TextualInstruction
-from .operator import InstanceOperatorWithGlobalAccess, StreamInstanceOperator
+from .operator import StreamInstanceOperator
 from .random_utils import random
 from .text_utils import split_words
 
 
 class Renderer(ABC):
+    """
+    @TODO: add docs
+    """
+
     @abstractmethod
     def get_postprocessors(self) -> List[str]:
         pass
 
 
 class Template(Artifact):
+    """
+    @TODO: add docs
+    """
+
     is_multi_target: bool = NonPositionalField(default=False)
     is_multi_reference: bool = NonPositionalField(default=False)
 
@@ -35,14 +44,22 @@ class Template(Artifact):
 
 
 class RenderFormatTemplate(Renderer, StreamInstanceOperator):
+    """
+    @TODO: add docs
+    """
+
     template: Template = None
     random_reference: bool = False
 
     def verify(self):
-        assert isinstance(self.template, Template), "Template must be an instance of Template"
+        assert isinstance(
+            self.template, Template
+        ), "Template must be an instance of Template"
         assert self.template is not None, "Template must be specified"
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         return self.render(instance)
 
     def render(self, instance: Dict[str, Any]) -> Dict[str, Any]:
@@ -76,6 +93,10 @@ class RenderFormatTemplate(Renderer, StreamInstanceOperator):
 
 
 class RenderAutoFormatTemplate(RenderFormatTemplate):
+    """
+    @TODO: add docs
+    """
+
     def prepare(self):
         if self.template is None:
             self.template = AutoInputOutputTemplate()
@@ -84,7 +105,7 @@ class RenderAutoFormatTemplate(RenderFormatTemplate):
         try:
             if not self.template.is_complete():
                 self.template.infer_missing(instance["inputs"], instance["outputs"])
-        except:
+        except Exception:
             pass
 
         inputs = {key: value for key, value in instance["inputs"].items()}
@@ -93,6 +114,10 @@ class RenderAutoFormatTemplate(RenderFormatTemplate):
 
 
 class CharacterSizeLimiter(Artifact):
+    """
+    @TODO: add docs
+    """
+
     limit: int = 1000
 
     def check(self, text: str) -> bool:
@@ -100,6 +125,10 @@ class CharacterSizeLimiter(Artifact):
 
 
 class RenderTemplatedICL(RenderAutoFormatTemplate):
+    """
+    @TODO: add docs
+    """
+
     instruction: Instruction = None
     input_prefix: str = ""
     output_prefix: str = ""
@@ -118,7 +147,12 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
 
         example = super().render(instance)
 
-        input_str = self.input_prefix + example["source"] + self.input_output_separator + self.output_prefix
+        input_str = (
+            self.input_prefix
+            + example["source"]
+            + self.input_output_separator
+            + self.output_prefix
+        )
 
         if self.instruction is not None:
             source += self.instruction_prefix + self.instruction() + self.demo_separator
@@ -136,7 +170,9 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
             )
 
             if self.size_limiter is not None:
-                if not self.size_limiter.check(source + demo_str + input_str + example["target"]):
+                if not self.size_limiter.check(
+                    source + demo_str + input_str + example["target"]
+                ):
                     continue
 
             source += demo_str
@@ -153,9 +189,15 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
 
 
 class InputOutputTemplate(Template):
+    """
+    @TODO: add docs
+    """
+
     input_format: str = None
     output_format: str = None
-    postprocessors: List[str] = field(default_factory=lambda: ["processors.to_string_stripped"])
+    postprocessors: List[str] = field(
+        default_factory=lambda: ["processors.to_string_stripped"]
+    )
 
     def process_template(self, template: str, data: Dict[str, object]) -> str:
         data = {k: ", ".join(v) if isinstance(v, list) else v for k, v in data.items()}
@@ -164,7 +206,7 @@ class InputOutputTemplate(Template):
     def process_inputs(self, inputs: Dict[str, object]) -> str:
         try:
             return self.process_template(self.input_format, inputs)
-        except KeyError as e:
+        except KeyError:
             raise KeyError(
                 f"Available inputs are {inputs.keys()} but input format requires a different one: {self.input_format}"
             )
@@ -172,7 +214,7 @@ class InputOutputTemplate(Template):
     def process_outputs(self, outputs: Dict[str, object]) -> str:
         try:
             return self.process_template(self.output_format, outputs)
-        except KeyError as e:
+        except KeyError:
             raise KeyError(
                 f"Available inputs are {outputs.keys()} but output format requires a different one: {self.output_format}"
             )
@@ -182,16 +224,27 @@ class InputOutputTemplate(Template):
 
 
 class KeyValTemplate(Template):
+    """
+    @TODO: add docs
+    """
+
     pairs_seperator: str = ", "
     key_val_seperator: str = ": "
     use_keys_for_inputs: bool = True
     outputs_key_val_seperator: str = ": "
     use_keys_for_outputs: bool = False
 
-    postprocessors: List[str] = field(default_factory=lambda: ["processors.to_string_stripped"])
+    postprocessors: List[str] = field(
+        default_factory=lambda: ["processors.to_string_stripped"]
+    )
 
-    def process_dict(self, dic: Dict[str, object], key_val_sep, pairs_sep, use_keys) -> str:
-        dic = {k: ", ".join([str(vi) for vi in v]) if isinstance(v, list) else v for k, v in dic.items()}
+    def process_dict(
+        self, dic: Dict[str, object], key_val_sep, pairs_sep, use_keys
+    ) -> str:
+        dic = {
+            k: ", ".join([str(vi) for vi in v]) if isinstance(v, list) else v
+            for k, v in dic.items()
+        }
         pairs = []
         for key, val in dic.items():
             key_val = [key, val] if use_keys else [val]
@@ -219,16 +272,25 @@ class KeyValTemplate(Template):
 
 
 class OutputQuantizingTemplate(InputOutputTemplate):
+    """
+    @TODO: add docs
+    """
+
     quantum: float = 0.1
 
     def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
         quantized_outputs = {
-            key: round(input_float / self.quantum) * self.quantum for key, input_float in outputs.items()
+            key: round(input_float / self.quantum) * self.quantum
+            for key, input_float in outputs.items()
         }
         return super().process_outputs(quantized_outputs)
 
 
 class MultiLabelTemplate(InputOutputTemplate):
+    """
+    @TODO: add docs
+    """
+
     labels_field: str = "labels"
     labels_seprator: str = ", "
     postprocessors = ["processors.to_list_by_comma"]
@@ -250,6 +312,10 @@ def escape_chars(s, chars_to_escape):
 
 
 class SpanLabelingBaseTemplate(MultiLabelTemplate):
+    """
+    @TODO: add docs
+    """
+
     spans_starts_field: str = "spans_starts"
     spans_ends_field: str = "spans_ends"
     text_field: str = "text"
@@ -281,6 +347,10 @@ class SpanLabelingBaseTemplate(MultiLabelTemplate):
 
 
 class SpanLabelingTemplate(SpanLabelingBaseTemplate):
+    """
+    @TODO: add docs
+    """
+
     span_label_format: str = "{span}: {label}"
     escape_characters: List[str] = [":", ","]
     postprocessors = ["processors.to_span_label_pairs"]
@@ -296,7 +366,14 @@ class SpanLabelingTemplate(SpanLabelingBaseTemplate):
 
 
 class SpanLabelingJsonTemplate(SpanLabelingBaseTemplate):
-    postprocessors = ["processors.load_json", "processors.dict_of_lists_to_value_key_pairs"]
+    """
+    @TODO: add docs
+    """
+
+    postprocessors = [
+        "processors.load_json",
+        "processors.dict_of_lists_to_value_key_pairs",
+    ]
 
     def span_label_pairs_to_targets(self, span_label_pairs):
         groups = {}
@@ -312,10 +389,16 @@ class SpanLabelingJsonTemplate(SpanLabelingBaseTemplate):
 
 
 class AutoInputOutputTemplate(InputOutputTemplate):
+    """
+    @TODO: add docs
+    """
+
     def infer_input_format(self, inputs):
         input_format = ""
         for key in inputs.keys():
-            name = " ".join(word.lower().capitalize() for word in split_words(key) if word != " ")
+            name = " ".join(
+                word.lower().capitalize() for word in split_words(key) if word != " "
+            )
             input_format += name + ": " + "{" + key + "}" + "\n"
         self.input_format = input_format
 
@@ -332,18 +415,22 @@ class AutoInputOutputTemplate(InputOutputTemplate):
         return self.input_format is not None and self.output_format is not None
 
 
-from .collections import ListCollection
-
-
 class TemplatesList(ListCollection):
+    """
+    @TODO: add docs
+    """
+
     def verify(self):
         for template in self.items:
             assert isinstance(template, Template)
 
 
-def outputs_inputs2templates(inputs: Union[str, List], outputs: Union[str, List]) -> TemplatesList:
+def outputs_inputs2templates(
+    inputs: Union[str, List], outputs: Union[str, List]
+) -> TemplatesList:
     """
-    combines input and output formats into their dot product
+    combines input and output formats into their dot product.
+
     :param inputs: list of input formats (or one)
     :param outputs: list of output formats (or one)
     :return: TemplatesList of InputOutputTemplate
@@ -365,10 +452,12 @@ def outputs_inputs2templates(inputs: Union[str, List], outputs: Union[str, List]
 
 
 def instructions2templates(
-    instructions: List[TextualInstruction], templates: List[InputOutputTemplate]
+    instructions: List[TextualInstruction],
+    templates: List[InputOutputTemplate],
 ) -> TemplatesList:
     """
-    Insert instructions into per demonstration templates
+    Insert instructions into per demonstration templates.
+
     :param instructions:
     :param templates: strings containing {instuction} where the instruction should be placed
     :return:
@@ -378,7 +467,9 @@ def instructions2templates(
         for template in templates:
             res_templates.append(
                 InputOutputTemplate(
-                    input_format=template.input_format.replace("{instruction}", instruction.text),
+                    input_format=template.input_format.replace(
+                        "{instruction}", instruction.text
+                    ),
                     output_format=template.output_format,
                 )
             )
@@ -386,6 +477,10 @@ def instructions2templates(
 
 
 class TemplatesDict(Dict):
+    """
+    @TODO: add docs
+    """
+
     def verify(self):
         for key, template in self.items():
             assert isinstance(template, Template)

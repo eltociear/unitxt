@@ -60,6 +60,10 @@ from .version import __file__ as _
 
 
 class MultiStreamScoreMean(MultiStreamOperator):
+    """
+    @TODO: add docs
+    """
+
     def aggegate_results(self, multi_stream: MultiStream):
         scores = []
         for stream in multi_stream.values():
@@ -80,19 +84,39 @@ class MultiStreamScoreMean(MultiStreamOperator):
 
         result = {}
         for stream_name, stream in multi_stream.items():
-            result[stream_name] = Stream(self.spread_results, gen_kwargs={"stream": stream, "score": mean_score})
+            result[stream_name] = Stream(
+                self.spread_results,
+                gen_kwargs={"stream": stream, "score": mean_score},
+            )
 
         return MultiStream(result)
 
 
 class FromPredictionsAndOriginalData(StreamInitializerOperator):
+    """
+    @TODO: add docs
+    """
+
     def zip(self, predictions, references):
         for prediction, original in zip(predictions, references):
             yield {**original, "prediction": prediction}
 
-    def process(self, predictions: List[str], references: Iterable, split_name: str = "all") -> MultiStream:
+    def process(
+        self,
+        predictions: List[str],
+        references: Iterable,
+        split_name: str = "all",
+    ) -> MultiStream:
         return MultiStream(
-            {split_name: Stream(self.zip, gen_kwargs={"predictions": predictions, "references": references})}
+            {
+                split_name: Stream(
+                    self.zip,
+                    gen_kwargs={
+                        "predictions": predictions,
+                        "references": references,
+                    },
+                )
+            }
         )
 
 
@@ -100,6 +124,10 @@ from .schema import UNITXT_DATASET_SCHEMA
 
 
 class MetricRecipe(SequntialOperatorInitilizer):
+    """
+    @TODO: add docs
+    """
+
     def prepare(self):
         register_all_artifacts()
         self.steps = [
@@ -120,15 +148,24 @@ class MetricRecipe(SequntialOperatorInitilizer):
         ]
 
 
-UNITXT_METRIC_SCHEMA = Features({"predictions": Value("string"), "references": dict(UNITXT_DATASET_SCHEMA)})
+UNITXT_METRIC_SCHEMA = Features(
+    {"predictions": Value("string"), "references": dict(UNITXT_DATASET_SCHEMA)}
+)
 
 
-def _compute(predictions: List[str], references: Iterable, flatten: bool = False, split_name: str = "all"):
+def _compute(
+    predictions: List[str],
+    references: Iterable,
+    flatten: bool = False,
+    split_name: str = "all",
+):
     _reset_env_local_catalogs()
     register_all_artifacts()
     recipe = MetricRecipe()
 
-    multi_stream = recipe(predictions=predictions, references=references, split_name=split_name)
+    multi_stream = recipe(
+        predictions=predictions, references=references, split_name=split_name
+    )
 
     if flatten:
         operator = FlattenInstances()
@@ -142,6 +179,10 @@ def _compute(predictions: List[str], references: Iterable, flatten: bool = False
 # TODO: currently we have two classes with this name. metric.Metric and matrics.Metric...
 # @evaluate.utils.file_utils.add_start_docstrings(_DESCRIPTION, _KWARGS_DESCRIPTION)
 class Metric(evaluate.Metric):
+    """
+    @TODO: add docs
+    """
+
     def _info(self):
         return evaluate.MetricInfo(
             description="_DESCRIPTION",
@@ -155,7 +196,13 @@ class Metric(evaluate.Metric):
             ],
         )
 
-    def _compute(self, predictions: List[str], references: Iterable, flatten: bool = False, split_name: str = "all"):
+    def _compute(
+        self,
+        predictions: List[str],
+        references: Iterable,
+        flatten: bool = False,
+        split_name: str = "all",
+    ):
         try:
             from unitxt.dataset import (
                 get_dataset_artifact as get_dataset_artifact_installed,
@@ -169,7 +216,15 @@ class Metric(evaluate.Metric):
             from unitxt.metric import _compute as _compute_installed
 
             return _compute_installed(
-                predictions=predictions, references=references, flatten=flatten, split_name=split_name
+                predictions=predictions,
+                references=references,
+                flatten=flatten,
+                split_name=split_name,
             )
         else:
-            return _compute(predictions=predictions, references=references, flatten=flatten, split_name=split_name)
+            return _compute(
+                predictions=predictions,
+                references=references,
+                flatten=flatten,
+                split_name=split_name,
+            )

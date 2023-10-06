@@ -1,5 +1,4 @@
 import json
-import logging
 import math
 import os.path
 import tempfile
@@ -16,7 +15,9 @@ TEMP_NAME = "tmp_name"
 def test_adding_to_catalog(card):
     with tempfile.TemporaryDirectory() as tmp_dir:
         add_to_catalog(card, TEMP_NAME, overwrite=True, catalog_path=tmp_dir)
-        assert os.path.exists(os.path.join(tmp_dir, TEMP_NAME + ".json")), "Card was not added to catalog"
+        assert os.path.exists(
+            os.path.join(tmp_dir, TEMP_NAME + ".json")
+        ), "Card was not added to catalog"
 
 
 def test_metrics_exist(card):
@@ -36,14 +37,12 @@ def test_loading_from_catalog(card):
 
 def load_examples_from_common_recipe(card, tested_split):
     if card.templates:
-        num_templates = len(card.templates)
-
         try:  # named templates (dict)
             template_item = next(iter(card.templates.keys()))
         except AttributeError:  # template list
             template_item = 0
     else:
-        num_templates = 0
+        # num_templates = 0
         template_item = None
     num_instructions = len(card.instructions) if card.instructions else 0
     recipe = CommonRecipe(
@@ -71,15 +70,23 @@ def load_examples_from_common_recipe(card, tested_split):
     return examples
 
 
-def test_with_eval(card, tested_split, strict=True, exact_match_score=1.0, full_mismatch_score=0.0):
+def test_with_eval(
+    card,
+    tested_split,
+    strict=True,
+    exact_match_score=1.0,
+    full_mismatch_score=0.0,
+):
     examples = load_examples_from_common_recipe(card, tested_split)
     # metric = evaluate.load('unitxt/metric')
     predictions = []
     for example in examples:
-        predictions.append(example["references"][0] if len(example["references"]) > 0 else [])
+        predictions.append(
+            example["references"][0] if len(example["references"]) > 0 else []
+        )
 
     results = _compute(predictions=predictions, references=examples)
-    if not exact_match_score == None and not math.isclose(
+    if exact_match_score is not None and not math.isclose(
         results[0]["score"]["global"]["groups_mean_score"], exact_match_score
     ):
         message = (
@@ -94,16 +101,29 @@ def test_with_eval(card, tested_split, strict=True, exact_match_score=1.0, full_
 
     predictions = ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
     results = _compute(predictions=predictions, references=examples)
-    if not full_mismatch_score == None and results[0]["score"]["global"]["groups_mean_score"] != full_mismatch_score:
+    if (
+        full_mismatch_score is not None
+        and results[0]["score"]["global"]["groups_mean_score"] != full_mismatch_score
+    ):
         print(
             f"Warning: metric on random predictions is not {full_mismatch_score}, but {results[0]['score']['global']['groups_mean_score']} "
         )
 
 
-def test_card(card, tested_split="train", strict=True, exact_match_score=1.0, full_mismatch_score=0.0):
+def test_card(
+    card,
+    tested_split="train",
+    strict=True,
+    exact_match_score=1.0,
+    full_mismatch_score=0.0,
+):
     test_adding_to_catalog(card)
     test_metrics_exist(card)
     test_loading_from_catalog(card)
     test_with_eval(
-        card, tested_split, strict=strict, exact_match_score=exact_match_score, full_mismatch_score=full_mismatch_score
+        card,
+        tested_split,
+        strict=strict,
+        exact_match_score=exact_match_score,
+        full_mismatch_score=full_mismatch_score,
     )

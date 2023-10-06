@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Union
 
 from .artifact import Artifact
 from .collections import Collection
@@ -10,6 +10,10 @@ from .task import FormTask
 
 
 class TaskCard(Artifact):
+    """
+    @TODO: add docs
+    """
+
     loader: Loader
     task: FormTask
     preprocess_steps: List[StreamingOperator] = None
@@ -19,6 +23,10 @@ class TaskCard(Artifact):
 
 
 class ICLCard(Artifact):
+    """
+    @TODO: add docs
+    """
+
     demos_pool_name: str = "demos_pool"
     demos_pool_size: int = None
     demos_field: str = "demos"

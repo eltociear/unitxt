@@ -2,7 +2,10 @@ from src.unitxt.catalog import add_to_catalog
 from src.unitxt.templates import InputOutputTemplate, TemplatesList
 
 add_to_catalog(
-    InputOutputTemplate(input_format="Text: {text}, Choices: {choices}.", output_format="{label}"),
+    InputOutputTemplate(
+        input_format="Text: {text}, Choices: {choices}.",
+        output_format="{label}",
+    ),
     "templates.classification.choices.simple",
     overwrite=True,
 )

@@ -1,12 +1,19 @@
 import copy
-import inspect
-import itertools
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from .dataclass import Dataclass, OptionalField
 
 
 class ReusableGenerator(Dataclass):
+    """
+    Represents a generator that can be reused multiple times.
+
+    Attributes:
+        generator (callable): The generator function to be activated.
+        gen_argv (List[Any], optional): List of positional arguments for the generator. Defaults to an empty list.
+        gen_kwargs (Dict[str, Any], optional): Dictionary of keyword arguments for the generator. Defaults to an empty dict.
+    """
+
     generator: callable
     gen_argv: List[Any] = OptionalField(default_factory=list)
     gen_kwargs: Dict[str, Any] = OptionalField(default_factory=dict)
@@ -22,36 +29,14 @@ class ReusableGenerator(Dataclass):
 
 
 class CopyingReusableGenerator(ReusableGenerator):
+    """
+    Extends the ReusableGenerator to deep copy each instance yielded by the
+    generator.
+
+    This ensures that modifications to the yielded instances do not
+    affect the original data.
+    """
+
     def __iter__(self):
         for instance in self.activate():
             yield copy.deepcopy(instance)
-
-
-# if __name__ == "__main__":
-#     from itertools import chain, islice
-
-#     # Creating objects of MyIterable
-#     iterable1 = ReusableGenerator(range, gen_argv=[1, 4])
-#     iterable2 = ReusableGenerator(range, gen_argv=[4, 7])
-
-#     # Using itertools.chain
-#     chained = list(chain(iterable1, iterable2))
-#     print(chained)  # Prints: [1, 2, 3, 4, 5, 6]
-
-#     # Using itertools.islice
-#     sliced = list(islice(ReusableGenerator(range, gen_argv=[1, 7]), 1, 4))
-#     print(sliced)  # Prints: [2, 3, 4]
-
-#     # now same test with generators
-#     def generator(start, end):
-#         for i in range(start, end):
-#             yield i
-
-#     iterable1 = ReusableGenerator(generator, gen_argv=[1, 4])
-#     iterable2 = ReusableGenerator(generator, gen_argv=[4, 7])
-
-#     chained = list(chain(iterable1, iterable2))
-#     print(chained)  # Prints: [1, 2, 3, 4, 5, 6]
-
-#     sliced = list(islice(ReusableGenerator(generator, gen_argv=[1, 7]), 1, 4))
-#     print(sliced)  # Prints: [2, 3, 4]

@@ -2,8 +2,12 @@ from .operator import SourceSequntialOperator
 
 
 class Recipe:
-    pass
+    """
+    @TODO: add docs
+    """
 
 
 class SequentialRecipe(Recipe, SourceSequntialOperator):
-    pass
+    """
+    @TODO: add docs
+    """

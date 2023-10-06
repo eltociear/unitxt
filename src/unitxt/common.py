@@ -2,16 +2,19 @@ from typing import Union
 
 from .card import TaskCard
 from .collections import ItemPicker, RandomPicker
-from .dataclass import OptionalField
 from .operator import SourceOperator
 from .recipe import Recipe, SequentialRecipe
 from .schema import ToUnitxtGroup
-from .splitters import RandomSampler, Sampler, SeparateSplit, SliceSplit, SpreadSplit
+from .splitters import Sampler, SeparateSplit, SpreadSplit
 from .stream import MultiStream
 from .templates import RenderTemplatedICL
 
 
 class CommonRecipe(Recipe, SourceOperator):
+    """
+    @TODO: add docs
+    """
+
     card: TaskCard
     demos_pool_name: str = "demos_pool"
     demos_taken_from: str = "train"
@@ -40,7 +43,10 @@ class CommonRecipe(Recipe, SourceOperator):
             steps.append(
                 SeparateSplit(
                     from_split=self.demos_taken_from,
-                    to_split_names=[self.demos_pool_name, self.demos_taken_from],
+                    to_split_names=[
+                        self.demos_pool_name,
+                        self.demos_taken_from,
+                    ],
                     to_split_sizes=[int(self.demos_pool_size)],
                 )
             )
@@ -62,7 +68,7 @@ class CommonRecipe(Recipe, SourceOperator):
             )
 
         if self.card.instructions is not None:
-            if not self.instruction_item is None:
+            if self.instruction_item is not None:
                 picker = ItemPicker(int(self.instruction_item))
             else:
                 picker = RandomPicker()

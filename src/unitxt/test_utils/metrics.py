@@ -2,7 +2,7 @@ import json
 from typing import Any, List
 
 from ..metrics import Metric
-from ..stream import MultiStream, Stream
+from ..stream import MultiStream
 from ..type_utils import isoftype
 
 
@@ -27,7 +27,8 @@ def apply_metric(metric: Metric, predictions: List[str], references: List[List[s
     assert isoftype(references, List[Any]), "references must be a list"
 
     test_iterable = [
-        {"prediction": prediction, "references": reference} for prediction, reference in zip(predictions, references)
+        {"prediction": prediction, "references": reference}
+        for prediction, reference in zip(predictions, references)
     ]
     multi_stream = MultiStream.from_iterables({"test": test_iterable}, copying=True)
     output_multi_stream = metric(multi_stream)
@@ -51,12 +52,16 @@ def test_metric(
     errors = []
     global_score = round_floats(outputs[0]["score"]["global"])
     if not dict_equal(global_score, global_target):
-        errors.append(f"global score must be equal, got <{global_score}> =/= <{global_target}>")
+        errors.append(
+            f"global score must be equal, got <{global_score}> =/= <{global_target}>"
+        )
 
     for output, instance_target in zip(outputs, instance_targets):
         instance_score = round_floats(output["score"]["instance"])
         if not dict_equal(instance_score, instance_target):
-            errors.append(f"instance score must be equal, got <{instance_score}> =/= <{instance_target}>")
+            errors.append(
+                f"instance score must be equal, got <{instance_score}> =/= <{instance_target}>"
+            )
 
     if len(errors) > 0:
         raise AssertionError("\n".join(errors))

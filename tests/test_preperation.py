@@ -1,7 +1,6 @@
 import glob
 import importlib.util
 import os
-import sys
 import unittest
 
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests

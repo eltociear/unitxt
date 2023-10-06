@@ -2,14 +2,24 @@ from .artifact import Artifact
 
 
 class Format(Artifact):
-    pass
+    """
+    @TODO: add docs
+    """
 
 
 class SizeLimitingFormat(Format):
+    """
+    @TODO: add docs
+    """
+
     size_limiter: Artifact = None
 
 
 class ICLFormat(SizeLimitingFormat):
+    """
+    @TODO: add docs
+    """
+
     prefix: str = ""
     input_prefix: str = ""
     output_prefix: str = ""
@@ -20,7 +30,12 @@ class ICLFormat(SizeLimitingFormat):
     suffix: str = ""
 
     def single_source_str(self, source):
-        return self.input_prefix + source + self.input_output_separator + self.output_prefix
+        return (
+            self.input_prefix
+            + source
+            + self.input_output_separator
+            + self.output_prefix
+        )
 
     def format(self, instance, demos_instances=[]):
         source = self.prefix
@@ -40,7 +55,9 @@ class ICLFormat(SizeLimitingFormat):
             )
 
             if self.size_limiter is not None:
-                if not self.size_limiter.check(source + demo_str + query_str + instance["target"]):
+                if not self.size_limiter.check(
+                    source + demo_str + query_str + instance["target"]
+                ):
                     continue
 
             source += demo_str

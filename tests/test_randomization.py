@@ -16,7 +16,7 @@ class TestExamples(unittest.TestCase):
             download_mode="force_redownload",
         )
         print("Loading squad")
-        squad_dataset = load_dataset(
+        _ = load_dataset(
             unitxt.dataset_file,
             "card=cards.rte,template_item=0,num_demos=5,demos_pool_size=100",
             download_mode="force_redownload",

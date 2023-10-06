@@ -8,6 +8,10 @@ from .random_utils import random
 
 
 class Collection(Artifact):
+    """
+    @TODO: add docs
+    """
+
     items: typing.Collection = AbstractField()
 
     def __getitem__(self, key):
@@ -18,6 +22,10 @@ class Collection(Artifact):
 
 
 class ListCollection(Collection):
+    """
+    @TODO: add docs
+    """
+
     items: List[Artifact] = field(default_factory=list)
 
     def __len__(self):
@@ -34,20 +42,36 @@ class ListCollection(Collection):
 
 
 class DictCollection(Collection):
+    """
+    @TODO: add docs
+    """
+
     items: Dict[str, Artifact] = field(default_factory=dict)
 
 
 class ItemPicker(Artifact):
+    """
+    @TODO: add docs
+    """
+
     item: object = None
 
     def __call__(self, collection: Collection):
         try:
             return collection[int(self.item)]
-        except (SyntaxError, KeyError, ValueError) as e:  # in case picking from a dictionary
+        except (
+            SyntaxError,
+            KeyError,
+            ValueError,
+        ):  # in case picking from a dictionary
             return collection[self.item]
 
 
 class RandomPicker(Artifact):
+    """
+    @TODO: add docs
+    """
+
     def __call__(self, collection: Collection):
         if isinstance(collection, ListCollection):
             return random.choice(list(collection.items))

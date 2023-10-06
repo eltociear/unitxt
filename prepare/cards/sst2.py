@@ -1,19 +1,13 @@
-import datasets as ds
-from src.unitxt import dataset
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
     InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
-    NormalizeListFields,
-    SplitRandomMix,
     TaskCard,
     TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import RenameFields
-from src.unitxt.splitters import RenameSplits
 from src.unitxt.test_utils.card import test_card
 
 one_sentence_classification_templates = TemplatesList(
@@ -26,14 +20,22 @@ one_sentence_classification_templates = TemplatesList(
         ),
     ]
 )
-add_to_catalog(one_sentence_classification_templates, "templates.one_sent_classification", overwrite=True)
+add_to_catalog(
+    one_sentence_classification_templates,
+    "templates.one_sent_classification",
+    overwrite=True,
+)
 
 one_sentence_classification_task = FormTask(
     inputs=["choices", "sentence"],
     outputs=["label"],
     metrics=["metrics.accuracy"],
 )
-add_to_catalog(one_sentence_classification_task, "tasks.one_sent_classification", overwrite=True)
+add_to_catalog(
+    one_sentence_classification_task,
+    "tasks.one_sent_classification",
+    overwrite=True,
+)
 
 
 card = TaskCard(
