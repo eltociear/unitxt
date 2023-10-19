@@ -6,8 +6,8 @@ import tempfile
 
 from .. import add_to_catalog, register_local_catalog
 from ..artifact import fetch_artifact
-from ..common import CommonRecipe
 from ..metric import _compute
+from ..standard import StandardRecipe
 from ..text_utils import print_dict
 
 TEMP_NAME = "tmp_name"
@@ -34,7 +34,7 @@ def test_loading_from_catalog(card):
         ), "Card loaded is not equal to card stored"
 
 
-def load_examples_from_common_recipe(card, tested_split):
+def load_examples_from_standard_recipe(card, tested_split):
     if card.templates:
         num_templates = len(card.templates)
 
@@ -45,25 +45,20 @@ def load_examples_from_common_recipe(card, tested_split):
     else:
         num_templates = 0
         template_item = None
-    num_instructions = len(card.instructions) if card.instructions else 0
-    recipe = CommonRecipe(
-        card=card,
-        demos_pool_size=100,
-        demos_taken_from=tested_split,
-        num_demos=3,
-        template_item=template_item,
-        instruction_item=0 if num_instructions else None,
+
+    recipe = StandardRecipe(
+        card=card, demos_pool_size=100, demos_taken_from=tested_split, num_demos=3, template_card_index=template_item
     )
     multi_stream = recipe()
     stream = multi_stream[tested_split]
     try:
-        examples = list(stream.take(5))
+        examples = list(stream.take(3))
     except ValueError as e:
         raise ValueError(
             "Try setting streaming=False in LoadHF in your card. For example: LoadHF(path='glue', name='mrpc', streaming=False). Org error message:",
             e,
         )
-    print("5 Examples: ")
+    print("3 Examples: ")
     for example in examples:
         print_dict(example)
         print("\n")
@@ -72,7 +67,7 @@ def load_examples_from_common_recipe(card, tested_split):
 
 
 def test_with_eval(card, tested_split, strict=True, exact_match_score=1.0, full_mismatch_score=0.0):
-    examples = load_examples_from_common_recipe(card, tested_split)
+    examples = load_examples_from_standard_recipe(card, tested_split)
     # metric = evaluate.load('unitxt/metric')
     predictions = []
     for example in examples:

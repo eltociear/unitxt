@@ -45,4 +45,44 @@ outputs = test_metric(
     global_target=global_target,
 )
 
+global_target = {
+    "rouge1": 1.0,
+    "rouge2": 0.0,
+    "rougeL": 1.0,
+    "rougeLsum": 1.0,
+    "score": 1.0,
+    "score_name": "rougeL",
+}
+instance_targets = [
+    {
+        "rouge1": 1.0,
+        "rouge2": 0.0,
+        "rougeL": 1.0,
+        "rougeL": 1.0,
+        "rougeLsum": 1.0,
+        "score": 1.0,
+        "score_name": "rougeL",
+    }
+]
+
+predictions = ["dog"]
+references = [["dog"]]
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets,
+    global_target=global_target,
+)
+
+# This fails
+# predictions = ["-"]
+# references = [["-"]]
+# outputs = test_metric(
+#    metric=metric,
+#    predictions=predictions,
+#    references=references,
+#    instance_targets=instance_targets,
+#    global_target=global_target,
+# )
 add_to_catalog(metric, "metrics.rouge", overwrite=True)
