@@ -41,4 +41,4 @@ card = TaskCard(
 )
 
 test_card(card, debug=True)
-add_to_catalog(card, "cards.katsumata", overwrite=True)
+add_to_catalog(card, "cards.wikihow_summ_jp", overwrite=True)
