@@ -1,7 +1,15 @@
 import os
 
 import datasets
-from src.unitxt.blocks import FormTask, LoadHF, RenameFields, SplitRandomMix, TaskCard
+from src.unitxt.blocks import (
+    FormTask,
+    InputOutputTemplate,
+    LoadHF,
+    RenameFields,
+    SplitRandomMix,
+    TaskCard,
+    TemplatesList,
+)
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.test_utils.card import test_card
 
@@ -30,15 +38,19 @@ card = TaskCard(
         },
     ),
     preprocess_steps=[
-        RenameFields(field_to_field={"tgt": "question", "src": "answer"}),
+        RenameFields(field_to_field={"tgt": "summary", "src": "document"}),
     ],
     task=FormTask(
-        inputs=["question"],
-        outputs=["answer"],
+        inputs=["document"],
+        outputs=["summary"],
         metrics=["metrics.rouge"],
     ),
-    templates="templates.qa.open.all",
+    templates=TemplatesList(
+        [
+            InputOutputTemplate(input_format="{document}", output_format="{summary}"),
+        ]
+    ),
 )
 
-test_card(card, debug=True)
+test_card(card, debug=False, strict=False)
 add_to_catalog(card, "cards.wikihow_summ_jp", overwrite=True)

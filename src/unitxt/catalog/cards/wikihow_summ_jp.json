@@ -13,22 +13,31 @@
         {
             "type": "rename_fields",
             "field_to_field": {
-                "tgt": "question",
-                "src": "answer"
+                "tgt": "summary",
+                "src": "document"
             }
         }
     ],
     "task": {
         "type": "form_task",
         "inputs": [
-            "question"
+            "document"
         ],
         "outputs": [
-            "answer"
+            "summary"
         ],
         "metrics": [
             "metrics.rouge"
         ]
     },
-    "templates": "templates.qa.open.all"
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "{document}",
+                "output_format": "{summary}"
+            }
+        ]
+    }
 }
