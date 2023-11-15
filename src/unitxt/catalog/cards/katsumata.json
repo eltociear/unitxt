@@ -1,0 +1,34 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "json",
+        "data_files": {
+            "train": "/home/dafnapension/wikihow_japanese/data/output/train.jsonl",
+            "validation": "/home/dafnapension/wikihow_japanese/data/output/dev.jsonl",
+            "test": "/home/dafnapension/wikihow_japanese/data/output/test.jsonl"
+        }
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "tgt": "question",
+                "src": "answer"
+            }
+        }
+    ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "question"
+        ],
+        "outputs": [
+            "answer"
+        ],
+        "metrics": [
+            "metrics.rouge"
+        ]
+    },
+    "templates": "templates.qa.open.all"
+}
