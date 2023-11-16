@@ -20,7 +20,7 @@ from src.unitxt.test_utils.card import test_card
 numbering = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 langs = ["afrikaans", "chinese", "english", "italian", "javanese", "portuguese", "swahili", "thai", "vietnamese"]
-path_to_loader = os.path.join(os.getcwd(), "m3examloader.py")
+path_to_loader = os.path.join(os.getcwd(), "prepare/cards/m3examloader.py")
 for lang in langs:
     card = TaskCard(
         loader=LoadHF(path=path_to_loader, name=lang),
