@@ -191,7 +191,14 @@ class Artifact(Dataclass):
     @classmethod
     def load(cls, path):
         with open(path) as f:
-            d = json.load(f)
+            try:
+                d = json.load(f)
+            except json.decoder.JSONDecodeError as e:
+                with open(path) as f:
+                    file_content = "\n".join(f.readlines())
+                raise RuntimeError(
+                    f"Failed to decode artifact at {path} with file content:\n{file_content}"
+                ) from e
         return cls.from_dict(d)
 
     def prepare(self):
